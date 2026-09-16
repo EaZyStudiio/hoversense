@@ -24,15 +24,19 @@ import type {
  * Clamps a numeric value between a minimum and maximum boundary.
  *
  * Mathematical definition:
- * clamp(v, lo, hi) = min(max(v, lo), hi)
+ * clamp(v, lo, hi) = min(max(v, min(lo, hi)), max(lo, hi))
+ *
+ * Handles inverted bounds gracefully if lo > hi.
  *
  * @param v The input value to constrain.
  * @param lo Lower bound.
  * @param hi Upper bound.
- * @returns Constrained value within [lo, hi].
+ * @returns Constrained value within [min(lo, hi), max(lo, hi)].
  */
 export function clamp(v: number, lo: number, hi: number): number {
-  return Math.min(Math.max(v, lo), hi);
+  const actualLo = Math.min(lo, hi);
+  const actualHi = Math.max(lo, hi);
+  return Math.min(Math.max(v, actualLo), actualHi);
 }
 
 /**
@@ -74,9 +78,11 @@ export function smooth(t: number): number {
  * If outside along an edge, it returns the perpendicular distance.
  * If outside across a diagonal corner, it returns the Euclidean hypotenuse to the corner vertex.
  *
+ * Handles inverted rectangles (left > right or top > bottom) safely.
+ *
  * Formula:
- * dx = max(0, rect.left - pt.x, pt.x - rect.right)
- * dy = max(0, rect.top - pt.y, pt.y - rect.bottom)
+ * dx = max(0, minX - pt.x, pt.x - maxX)
+ * dy = max(0, minY - pt.y, pt.y - maxY)
  * distance = sqrt(dx^2 + dy^2)
  *
  * @param pt Coordinate point {x, y}.
@@ -84,8 +90,13 @@ export function smooth(t: number): number {
  * @returns Non-negative Euclidean distance in pixels.
  */
 export function distToRect(pt: Point, r: Rect): number {
-  const dx = Math.max(0, r.left - pt.x, pt.x - r.right);
-  const dy = Math.max(0, r.top - pt.y, pt.y - r.bottom);
+  const minX = Math.min(r.left, r.right);
+  const maxX = Math.max(r.left, r.right);
+  const minY = Math.min(r.top, r.bottom);
+  const maxY = Math.max(r.top, r.bottom);
+
+  const dx = Math.max(0, minX - pt.x, pt.x - maxX);
+  const dy = Math.max(0, minY - pt.y, pt.y - maxY);
   return Math.hypot(dx, dy);
 }
 
@@ -106,10 +117,13 @@ export function distToRect(pt: Point, r: Rect): number {
  * @returns Penetration factor from 0.0 (outside) to 1.0 (fully inside).
  */
 export function zonePenetration(pt: Point, z: SafeZone, vw: number, vh: number): number {
-  const l = z.left * vw;
-  const r = z.right * vw;
-  const t = z.top * vh;
-  const b = z.bottom * vh;
+  const safeVw = Math.max(1, vw);
+  const safeVh = Math.max(1, vh);
+
+  const l = z.left * safeVw;
+  const r = z.right * safeVw;
+  const t = z.top * safeVh;
+  const b = z.bottom * safeVh;
   const f = Math.max(1, z.featherPx ?? 60);
 
   // Signed distance to the nearest interior edge: positive inside, negative outside
@@ -142,6 +156,10 @@ export function sampleZones(
 ): { weight: number; zoneId: string | null } {
   let weight = 1.0;
   let hit: string | null = null;
+
+  if (!zones || zones.length === 0) {
+    return { weight: 1.0, zoneId: null };
+  }
 
   for (const z of zones) {
     const p = zonePenetration(pt, z, vw, vh);
@@ -182,7 +200,7 @@ export function computeIntent(g: GestureState, cfg: TouchChannelConfig, now: num
 
   // 1. Compute dynamic hold threshold based on zone confidence
   const holdMs = lerp(cfg.holdMsMax, cfg.holdMsMin, g.zoneWeight);
-  const elapsed = (g.endTime ?? now) - g.startTime;
+  const elapsed = Math.max(0, (g.endTime ?? now) - g.startTime);
   const holdIntent = clamp(elapsed / Math.max(1, holdMs), 0, 1);
 
   // 2. Compute drag displacement intent with vertical dampening
@@ -209,7 +227,8 @@ export function computeIntent(g: GestureState, cfg: TouchChannelConfig, now: num
  * @returns True if the gesture qualifies as a click/tap.
  */
 export function isTap(g: GestureState, cfg: TouchChannelConfig): boolean {
-  const duration = (g.endTime ?? g.lastTime) - g.startTime;
+  if (!g.startTime) return false;
+  const duration = Math.max(0, (g.endTime ?? g.lastTime) - g.startTime);
   const movement = Math.hypot(g.x - g.startX, g.y - g.startY);
   return duration <= cfg.tapMaxMs && movement <= cfg.tapMaxMovePx;
 }
@@ -234,20 +253,24 @@ export interface RowGroup {
  */
 export function groupByRow(items: MeasuredItem[]): RowGroup[] {
   if (!items.length) return [];
-  const sorted = [...items].sort((a, b) => a.rect.top - b.rect.top);
+  const validItems = items.filter(it => it && it.rect && Number.isFinite(it.rect.top));
+  if (!validItems.length) return [];
+
+  const sorted = [...validItems].sort((a, b) => a.rect.top - b.rect.top);
   const rows: RowGroup[] = [];
 
   for (const it of sorted) {
+    const itemHeight = Math.max(1, it.rect.bottom - it.rect.top);
     const matchingRow = rows.find(row => {
       const overlap = Math.min(row.bottom, it.rect.bottom) - Math.max(row.top, it.rect.top);
-      return overlap > it.rect.height * 0.2;
+      return overlap > itemHeight * 0.2;
     });
 
     if (!matchingRow) {
       rows.push({
         top: it.rect.top,
         bottom: it.rect.bottom,
-        height: Math.max(1, it.rect.height),
+        height: Math.max(1, it.rect.bottom - it.rect.top),
         items: [it],
       });
     } else {
@@ -260,7 +283,7 @@ export function groupByRow(items: MeasuredItem[]): RowGroup[] {
 
   // Sort items horizontally within each row
   for (const r of rows) {
-    r.items.sort((a, b) => (a.rect.left + a.rect.width / 2) - (b.rect.left + b.rect.width / 2));
+    r.items.sort((a, b) => (a.rect.left + (a.rect.right - a.rect.left) / 2) - (b.rect.left + (b.rect.right - b.rect.left) / 2));
   }
 
   return rows;
@@ -279,7 +302,7 @@ export function groupByRow(items: MeasuredItem[]): RowGroup[] {
  *   33.3% each for 3-col) with smooth linear crossfading between columns.
  *
  * @param items Registered measured items.
- * @param vw Viewport width.
+ * @param _vw Viewport width.
  * @param vh Viewport height.
  * @param cfg Screen channel configuration.
  * @returns Array of calculated hover hits with strength [0.0, 1.0].
@@ -291,8 +314,9 @@ export function resolveScreen(
   cfg: ScreenChannelConfig
 ): HoverHit[] {
   if (!items.length) return [];
-  const anchorY = vh * cfg.anchorRatio;
-  const band = Math.max(1, vh * cfg.bandRatio);
+  const safeVh = Math.max(1, vh);
+  const anchorY = safeVh * cfg.anchorRatio;
+  const band = Math.max(1, safeVh * cfg.bandRatio);
   const rows = groupByRow(items);
   const out: HoverHit[] = [];
 
@@ -303,7 +327,7 @@ export function resolveScreen(
     const sliceWidth = 1 / N;
 
     row.items.forEach((it, colIdx) => {
-      const cy = it.rect.top + it.rect.height / 2;
+      const cy = it.rect.top + (it.rect.bottom - it.rect.top) / 2;
       const d = Math.abs(cy - anchorY);
       const baseStrength = smooth(1 - d / band);
       if (baseStrength <= 0.001) return;
@@ -326,7 +350,26 @@ export function resolveScreen(
     });
   }
 
+  // Handle discrete resolution modes if requested
+  if (cfg.resolve === 'global' && out.length > 1) {
+    out.sort((a, b) => b.strength - a.strength);
+    return [out[0]];
+  }
+
   return out;
+}
+
+/**
+ * Filters hover hits to select discrete winner(s).
+ *
+ * @param hits Array of calculated hover hits.
+ * @param mode 'global' picks single highest winner; 'all' preserves all hits.
+ * @returns Filtered winning hits.
+ */
+export function resolveWinners(hits: HoverHit[], mode: 'global' | 'all' = 'all'): HoverHit[] {
+  if (!hits.length || mode === 'all') return hits;
+  const sorted = [...hits].sort((a, b) => b.strength - a.strength);
+  return [sorted[0]];
 }
 
 /**
@@ -355,22 +398,29 @@ export function getHitUnderPoint(
 ): string | null {
   if (!point || !items.length) return null;
 
+  const validItems = items.filter(it => it && it.rect && Number.isFinite(it.rect.left));
+  if (!validItems.length) return null;
+
   // 1. Direct Hit
-  const direct = items.find(it => {
+  const direct = validItems.find(it => {
     const r = it.rect;
-    return point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom;
+    const minX = Math.min(r.left, r.right);
+    const maxX = Math.max(r.left, r.right);
+    const minY = Math.min(r.top, r.bottom);
+    const maxY = Math.max(r.top, r.bottom);
+    return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
   });
   if (direct) return direct.id;
 
   // 2. Measure Euclidean edge distances to all targets
-  const dists = items
+  const dists = validItems
     .map(it => ({ id: it.id, d: distToRect(point, it.rect) }))
     .sort((a, b) => a.d - b.d);
 
   const closest = dists[0];
   const second = dists[1];
 
-  const outerFalloff = cfg.outerFalloffPx ?? 42;
+  const outerFalloff = Math.max(0, cfg.outerFalloffPx ?? 42);
   const inBetweenRatio = clamp(cfg.inBetweenRatio ?? 0.40, 0, 1);
 
   let effectiveFalloff = outerFalloff;
@@ -415,6 +465,7 @@ export interface ArbitrateParams {
  */
 export function arbitrate(params: ArbitrateParams): HoverHit[] {
   const { screenHits, touchHit, authority, modes } = params;
+  const safeAuthority = clamp(authority, 0, 1);
   const map = new Map<string, HoverHit>();
 
   const addHit = (h: HoverHit | null, multiplier: number) => {
@@ -428,12 +479,12 @@ export function arbitrate(params: ArbitrateParams): HoverHit[] {
   };
 
   if (modes.screen) {
-    const screenScale = modes.touch ? 1 - authority : 1.0;
+    const screenScale = modes.touch ? 1 - safeAuthority : 1.0;
     screenHits.forEach(h => addHit(h, screenScale));
   }
 
   if (modes.touch) {
-    addHit(touchHit, authority);
+    addHit(touchHit, safeAuthority);
   }
 
   return Array.from(map.values()).sort((a, b) => b.strength - a.strength);

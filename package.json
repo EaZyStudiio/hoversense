@@ -5,6 +5,17 @@
   "main": "./dist/hoversense.cjs.js",
   "module": "./dist/hoversense.es.js",
   "types": "./dist/index.d.ts",
+  "unpkg": "./dist/hoversense.iife.js",
+  "jsdelivr": "./dist/hoversense.iife.js",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EaZyStudiio/hoversense.git"
+  },
+  "homepage": "https://eazystudiio.github.io/hoversense",
+  "bugs": {
+    "url": "https://github.com/EaZyStudiio/hoversense/issues"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,13 +24,13 @@
     },
     "./math": {
       "types": "./dist/math.d.ts",
-      "import": "./dist/math.es.js",
-      "require": "./dist/math.cjs.js"
+      "import": "./dist/hoversense.es.js",
+      "require": "./dist/hoversense.cjs.js"
     }
   },
   "files": [
     "dist",
-    "math",
+    "src",
     "README.md",
     "LICENSE"
   ],

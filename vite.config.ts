@@ -3,18 +3,17 @@ import { resolve } from 'path';
 
 export default defineConfig({
   build: {
+    emptyOutDir: false,
     lib: {
-      entry: {
-        hoversense: resolve(__dirname, 'src/index.ts'),
-        math: resolve(__dirname, 'src/math.ts')
-      },
+      entry: resolve(__dirname, 'src/index.ts'),
       name: 'HoverSense',
-      formats: ['es', 'cjs']
+      formats: ['es', 'cjs', 'umd', 'iife'],
+      fileName: (format) => `hoversense.${format}.js`,
     },
     rollupOptions: {
       output: {
-        entryFileNames: (chunkInfo) => `${chunkInfo.name}.[format].js`
-      }
-    }
-  }
+        exports: 'named',
+      },
+    },
+  },
 });

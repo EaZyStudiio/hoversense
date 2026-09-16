@@ -69,8 +69,8 @@ export const DEFAULT_CONFIG: HoverSenseConfig = {
     // 1.3 ratio: |dy| > |dx| * 1.3 classifies the gesture definitively as a vertical scroll.
     scrollLockAxisRatio: 1.3,
 
-    // 1.0: 100% intent accumulation required before locking touch hover state.
-    engageAt: 1.0,
+    // 0.90: 90% intent accumulation required before locking touch hover state.
+    engageAt: 0.90,
 
     // Tap classification thresholds (passed through to native click/navigation).
     tapMaxMs: 180,

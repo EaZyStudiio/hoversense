@@ -66,7 +66,7 @@ public final class HoverSenseMath {
         public double verticalDragWeight = 0.22;
         public double scrollLockGraceMs = 220.0;
         public double scrollLockAxisRatio = 1.3;
-        public double engageAt = 1.0;
+        public double engageAt = 0.90;
         public double tapMaxMs = 180.0;
         public double tapMaxMovePx = 10.0;
         public double outerFalloffPx = 42.0;

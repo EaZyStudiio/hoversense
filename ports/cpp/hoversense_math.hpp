@@ -61,7 +61,7 @@ struct TouchConfig {
     double verticalDragWeight{0.22};
     double scrollLockGraceMs{220.0};
     double scrollLockAxisRatio{1.3};
-    double engageAt{1.0};
+    double engageAt{0.90};
     double tapMaxMs{180.0};
     double tapMaxMovePx{10.0};
     double outerFalloffPx{42.0};

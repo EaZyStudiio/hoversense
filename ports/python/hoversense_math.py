@@ -69,7 +69,7 @@ class TouchConfig:
     vertical_drag_weight: float = 0.22  # Dampening for vertical displacement vs scroll
     scroll_lock_grace_ms: float = 220.0 # Time window for vertical flick detection (ms)
     scroll_lock_axis_ratio: float = 1.3 # |dy| > |dx| * 1.3 classifies gesture as scroll
-    engage_at: float = 1.0              # Intent required to lock touch hover (0.0 to 1.0)
+    engage_at: float = 0.90             # Intent required to lock touch hover (0.0 to 1.0)
     tap_max_ms: float = 180.0           # Maximum duration for click/tap classification (ms)
     tap_max_move_px: float = 10.0       # Maximum movement for click/tap classification (px)
     outer_falloff_px: float = 42.0      # Boundary snap cushion (px)

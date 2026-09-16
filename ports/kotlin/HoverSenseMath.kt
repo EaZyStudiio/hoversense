@@ -47,7 +47,7 @@ data class TouchConfig(
     val verticalDragWeight: Double = 0.22,
     val scrollLockGraceMs: Double = 220.0,
     val scrollLockAxisRatio: Double = 1.3,
-    val engageAt: Double = 1.0,
+    val engageAt: Double = 0.90,
     val tapMaxMs: Double = 180.0,
     val tapMaxMovePx: Double = 10.0,
     val outerFalloffPx: Double = 42.0,

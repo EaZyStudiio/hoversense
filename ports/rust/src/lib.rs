@@ -93,7 +93,7 @@ impl Default for TouchConfig {
             vertical_drag_weight: 0.22,
             scroll_lock_grace_ms: 220.0,
             scroll_lock_axis_ratio: 1.3,
-            engage_at: 1.0,
+            engage_at: 0.90,
             tap_max_ms: 180.0,
             tap_max_move_px: 10.0,
             outer_falloff_px: 42.0,

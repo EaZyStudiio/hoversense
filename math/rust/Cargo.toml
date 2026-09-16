@@ -1,0 +1,9 @@
+[package]
+name = "hoversense-math"
+version = "1.0.0"
+edition = "2021"
+description = "Pure mathematical foundation for HoverSense: pointerless spatial hover on touch interfaces."
+license = "MIT"
+authors = ["EaZy (https://github.com/EaZyStudiio)"]
+
+[dependencies]

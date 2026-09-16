@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<title>HoverSense - Spatial Hover Demo Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b1e2b;
+    --paper:#eef0f6;
+    --panel:#ffffff;
+    --line:#c9cddd;
+    --muted:#5d6479;
+    --screen:#0e7c86;      /* screen-position channel */
+    --touch:#5b46d9;       /* touch-position channel */
+    --dead:#8a8fa3;        /* safe / ignored zone */
+    --fg:var(--ink);
+    --bg:var(--paper);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#e7e9f2; --paper:#12151f; --panel:#1a1e2b; --line:#2e3446; --muted:#8e96ad;
+      --screen:#3fd1cf; --touch:#9b8cff; --dead:#5a6076;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e7e9f2; --paper:#12151f; --panel:#1a1e2b; --line:#2e3446; --muted:#8e96ad;
+    --screen:#3fd1cf; --touch:#9b8cff; --dead:#5a6076;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  /* Stage: touch-action:pan-y keeps native vertical scrolling while killing double-tap zoom */
+  #stage{
+    -webkit-user-select:none; user-select:none;
+    -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
+    touch-action:pan-y;
+    padding:0 14px 65vh;
+  }
+
+  .card{
+    position:relative; border:1px solid var(--line); border-radius:10px;
+    background:var(--panel); padding:12px 14px; overflow:hidden;
+    transition:transform 90ms linear, box-shadow 90ms linear, border-color 90ms linear;
+  }
+  .card .idx{font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1}
+  .card .meta{color:var(--muted);font-size:11px;margin-top:4px}
+  .card .bar{position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent}
+
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .cols{display:flex;gap:12px;align-items:flex-start}
+  .col{flex:1;display:flex;flex-direction:column;gap:12px}
+  .portrait{aspect-ratio:3/4;display:flex;flex-direction:column;justify-content:flex-end}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .grid3 .card{aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:flex-end}
+
+  /* fixed chrome */
+  .hud{
+    position:fixed;left:8px;right:8px;top:8px;z-index:40;
+    background:color-mix(in srgb,var(--panel) 88%,transparent);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);border-radius:12px;padding:8px 10px;
+    font-size:11px;
+  }
+  .hud-row{display:flex;flex-wrap:wrap;gap:6px 14px}
+  .kv{display:flex;gap:5px;align-items:baseline}
+  .kv b{font-weight:500;color:var(--muted);font-size:10px}
+  .dock{
+    position:fixed;left:8px;right:8px;bottom:8px;z-index:40;
+    background:color-mix(in srgb,var(--panel) 92%,transparent);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--line);border-radius:12px;padding:8px;
+    max-height:45vh;overflow-y:auto;
+  }
+  .btnrow{display:flex;gap:6px;flex-wrap:wrap}
+  button{
+    font:inherit;font-size:12px;padding:7px 10px;border-radius:8px;
+    border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer;
+    touch-action:manipulation;
+  }
+  button[data-on="1"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+  button.ch-screen[data-on="1"]{background:var(--screen);border-color:var(--screen);color:#04121a}
+  button.ch-touch[data-on="1"]{background:var(--touch);border-color:var(--touch);color:#fff}
+  .sliders{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:8px}
+  .sl{display:flex;flex-direction:column;gap:2px;font-size:10px;color:var(--muted)}
+  .sl input{width:100%}
+  details{margin-top:6px}
+  details>summary{cursor:pointer;font-size:11px;color:var(--muted);padding:4px 0}
+
+  /* overlays */
+  .anchor{position:fixed;left:0;right:0;height:0;z-index:30;pointer-events:none;
+    border-top:1px dashed var(--screen)}
+  .anchor span{position:absolute;right:6px;top:-14px;font-size:9px;color:var(--screen)}
+  .band{position:fixed;left:0;right:0;z-index:29;pointer-events:none}
+  .zone{position:fixed;z-index:28;pointer-events:none}
+  .dot{position:fixed;z-index:35;pointer-events:none;width:16px;height:16px;margin:-8px 0 0 -8px;
+    border-radius:50%;border:2px solid var(--touch)}
+  .dot i{position:absolute;inset:3px;border-radius:50%;background:var(--touch)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useMemo } = React;
+
+/* ============================================================================
+   HoverSense Pure Mathematics Module
+   ==========================================================================*/
+
+const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+const lerp  = (a, b, t) => a + (b - a) * t;
+const smooth = (t) => { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); };
+
+function distToRect(pt, r) {
+  const dx = Math.max(0, r.left - pt.x, pt.x - r.right);
+  const dy = Math.max(0, r.top - pt.y, pt.y - r.bottom);
+  return Math.hypot(dx, dy);
+}
+
+const DEFAULTS = {
+  screen: {
+    anchorRatio: 0.42,
+    bandRatio: 0.30,
+    resolve: 'global',
+    rowSplit: 0.0,
+  },
+  touch: {
+    holdMsMin: 320,
+    holdMsMax: 1200,
+    dragDeadzonePx: 9,
+    dragFullPx: 46,
+    verticalDragWeight: 0.22,
+    scrollLockGraceMs: 220,
+    scrollLockAxisRatio: 1.3,
+    engageAt: 1.0,
+    tapMaxMs: 180,
+    tapMaxMovePx: 10,
+    outerFalloffPx: 42,
+    inBetweenRatio: 0.40,
+    clearLatchOnTap: false,
+  },
+  arbitration: {
+    takeoverStartPx: 180,
+    takeoverFullPx: 560,
+    releaseMode: 'off-screen',
+  },
+  safeZones: [
+    { id:'thumb-rest', left:0, right:1, top:0.80, bottom:1.00, weight:0.00, featherPx:110 },
+    { id:'edge-left',  left:0, right:0.07, top:0, bottom:1, weight:0.25, featherPx:40 },
+    { id:'edge-right', left:0.93, right:1, top:0, bottom:1, weight:0.25, featherPx:40 },
+    { id:'top-chrome', left:0, right:1, top:0, bottom:0.09, weight:0.00, featherPx:50 },
+  ],
+};
+
+function zonePenetration(pt, z, vw, vh) {
+  const l = z.left * vw, r = z.right * vw, t = z.top * vh, b = z.bottom * vh;
+  const f = Math.max(1, z.featherPx ?? 60);
+  const d = Math.min(pt.x - l, r - pt.x, pt.y - t, b - pt.y);
+  return smooth((d + f / 2) / f);
+}
+
+function sampleZones(pt, zones, vw, vh) {
+  let weight = 1, hit = null;
+  for (const z of zones) {
+    const p = zonePenetration(pt, z, vw, vh);
+    if (p <= 0) continue;
+    const w = lerp(1, z.weight, p);
+    if (w < weight) { weight = w; hit = z.id; }
+  }
+  return { weight, zoneId: hit };
+}
+
+function computeIntent(g, cfg, now) {
+  if (g.scrollLocked) return 0;
+  if (g.zoneWeight <= 0.001) return 0;
+  const holdMs = lerp(cfg.holdMsMax, cfg.holdMsMin, g.zoneWeight);
+  const elapsed = (g.endTime ?? now) - g.startTime;
+  const hold = clamp(elapsed / holdMs, 0, 1);
+  const dx = g.x - g.startX, dy = g.y - g.startY;
+  const eff = Math.hypot(dx, dy * cfg.verticalDragWeight);
+  const drag = clamp((eff - cfg.dragDeadzonePx) / (cfg.dragFullPx - cfg.dragDeadzonePx), 0, 1);
+  return clamp(Math.max(hold, drag * g.zoneWeight), 0, 1);
+}
+
+function isTap(g, cfg) {
+  const dur = (g.endTime ?? g.lastTime) - g.startTime;
+  const move = Math.hypot(g.x - g.startX, g.y - g.startY);
+  return dur <= cfg.tapMaxMs && move <= cfg.tapMaxMovePx;
+}
+
+function groupByRow(items) {
+  if (!items.length) return [];
+  const sorted = [...items].sort((a, b) => a.rect.top - b.rect.top);
+  const rows = [];
+
+  for (const it of sorted) {
+    let r = rows.find(row => {
+      const overlap = Math.min(row.bottom, it.rect.bottom) - Math.max(row.top, it.rect.top);
+      return overlap > it.rect.height * 0.2;
+    });
+
+    if (!r) {
+      r = { top: it.rect.top, bottom: it.rect.bottom, items: [] };
+      rows.push(r);
+    }
+    r.items.push(it);
+    r.top = Math.min(r.top, it.rect.top);
+    r.bottom = Math.max(r.bottom, it.rect.bottom);
+  }
+
+  for (const r of rows) {
+    r.items.sort((a, b) => (a.rect.left + a.rect.width / 2) - (b.rect.left + b.rect.width / 2));
+    r.height = Math.max(1, r.bottom - r.top);
+  }
+  return rows;
+}
+
+function resolveScreen(items, vw, vh, cfg) {
+  if (!items.length) return [];
+  const anchorY = vh * cfg.anchorRatio;
+  const band = Math.max(1, vh * cfg.bandRatio);
+  const rows = groupByRow(items);
+  const out = [];
+
+  for (const row of rows) {
+    const N = row.items.length;
+    const v = clamp((anchorY - row.top) / row.height, 0, 1);
+    const sliceWidth = 1 / N;
+
+    row.items.forEach((it, colIdx) => {
+      const cy = it.rect.top + it.rect.height / 2;
+      const d = Math.abs(cy - anchorY);
+      const baseStrength = smooth(1 - d / band);
+      if (baseStrength <= 0.001) return;
+
+      let colWeight = 1.0;
+      if (N > 1 && (cfg.rowSplit ?? 0) > 0) {
+        const colCenter = (colIdx + 0.5) * sliceWidth;
+        const distFromCenter = Math.abs(v - colCenter);
+        const splitStrength = clamp(1 - (distFromCenter / sliceWidth), 0, 1);
+        colWeight = lerp(1.0, splitStrength, cfg.rowSplit);
+      }
+
+      const finalStrength = baseStrength * colWeight;
+      if (finalStrength > 0.001) {
+        out.push({ id: it.id, strength: finalStrength, source: 'screen' });
+      }
+    });
+  }
+  return out;
+}
+
+function getHitUnderPoint(point, items, cfg) {
+  if (!point || !items.length) return null;
+
+  const hit = items.find(it => {
+    const r = it.rect;
+    return point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom;
+  });
+  if (hit) return hit.id;
+
+  const dists = items.map(it => ({
+    id: it.id,
+    d: distToRect(point, it.rect)
+  })).sort((a, b) => a.d - b.d);
+
+  const closest = dists[0];
+  const second = dists[1];
+  const outerFalloff = cfg.outerFalloffPx ?? 42;
+  const inBetweenRatio = clamp(cfg.inBetweenRatio ?? 0.40, 0, 1);
+
+  let effectiveFalloff = outerFalloff;
+  if (second) {
+    const gapSpan = closest.d + second.d;
+    const gapAllowance = (gapSpan / 2) * inBetweenRatio;
+    effectiveFalloff = Math.min(outerFalloff, gapAllowance);
+  }
+
+  if (closest.d <= effectiveFalloff) {
+    return closest.id;
+  }
+  return null;
+}
+
+function arbitrate({ screenHits, touchHit, authority, modes }) {
+  const map = new Map();
+  const add = (h, mul) => {
+    if (!h) return;
+    const s = h.strength * mul;
+    if (s <= 0.001) return;
+    const prev = map.get(h.id);
+    if (!prev || s > prev.strength) map.set(h.id, { ...h, strength: s });
+  };
+  if (modes.screen) screenHits.forEach(h => add(h, modes.touch ? 1 - authority : 1));
+  if (modes.touch) add(touchHit, authority);
+  return [...map.values()].sort((a, b) => b.strength - a.strength);
+}
+
+/* ============================================================================
+   React Adapter Hook using HoverSense Engine Principles
+   ==========================================================================*/
+
+const newGesture = () => ({
+  phase: 'idle',
+  startX: 0, startY: 0, x: 0, y: 0,
+  startTime: 0, lastTime: 0, endTime: null,
+  zoneWeight: 1, zoneId: null,
+  scrollLocked: false,
+  down: false,
+});
+
+function useHoverSenseLab({ registry, cfg, modes, enabled }) {
+  const g = useRef(newGesture());
+  const latch = useRef(null);
+  const scrollAtLatch = useRef(0);
+  const [out, setOut] = useState({ hits: [], dbg: {} });
+  const publish = useRef({ key: '' });
+
+  useEffect(() => {
+    const stage = document.getElementById('stage');
+    if (!stage) return;
+    const vw = () => window.innerWidth, vh = () => window.innerHeight;
+
+    const down = (e) => {
+      const items = [];
+      registry.current.forEach((el, id) => { if (el) items.push({ id, rect: el.getBoundingClientRect() }); });
+      const hitId = getHitUnderPoint({ x: e.clientX, y: e.clientY }, items, cfg.touch);
+      const isTargetHit = hitId !== null;
+
+      const z = isTargetHit 
+        ? { weight: 1, zoneId: null }
+        : sampleZones({ x: e.clientX, y: e.clientY }, cfg.safeZones, vw(), vh());
+
+      g.current = {
+        ...newGesture(),
+        phase: 'probing', down: true,
+        startX: e.clientX, startY: e.clientY, x: e.clientX, y: e.clientY,
+        startTime: performance.now(), lastTime: performance.now(),
+        zoneWeight: z.weight, zoneId: z.zoneId,
+      };
+    };
+
+    const move = (e) => {
+      const c = g.current;
+      if (!c.down) return;
+      c.x = e.clientX; c.y = e.clientY; c.lastTime = performance.now();
+      if (c.phase === 'probing' && !c.scrollLocked) {
+        const dt = c.lastTime - c.startTime;
+        const dx = Math.abs(c.x - c.startX), dy = Math.abs(c.y - c.startY);
+        if (dt <= cfg.touch.scrollLockGraceMs &&
+            dy > cfg.touch.dragDeadzonePx &&
+            dy > dx * cfg.touch.scrollLockAxisRatio) {
+          c.scrollLocked = true;
+        }
+      }
+    };
+
+    const up = () => {
+      const c = g.current;
+      if (!c.down) return;
+      c.down = false;
+      c.endTime = performance.now();
+      if (c.phase === 'engaged') {
+        scrollAtLatch.current = window.scrollY;
+      } else if (isTap(c, cfg.touch)) {
+        if (cfg.touch.clearLatchOnTap) latch.current = null;
+      }
+      c.phase = 'idle';
+    };
+
+    stage.addEventListener('pointerdown', down, { passive: true });
+    window.addEventListener('pointermove', move, { passive: true });
+    window.addEventListener('pointerup', up, { passive: true });
+    window.addEventListener('pointercancel', up, { passive: true });
+    return () => {
+      stage.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
+  }, [cfg, modes]);
+
+  useEffect(() => { if (!modes.touch) { latch.current = null; g.current = newGesture(); } }, [modes.touch]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let raf = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const now = performance.now();
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const c = g.current;
+
+      const intent = (c.phase === 'probing' || c.phase === 'engaged')
+        ? computeIntent(c, cfg.touch, now) : 0;
+
+      if (c.phase === 'probing' && intent >= cfg.touch.engageAt) {
+        c.phase = 'engaged';
+        const items = [];
+        registry.current.forEach((el, id) => { if (el) items.push({ id, rect: el.getBoundingClientRect() }); });
+        const hitId = getHitUnderPoint({ x: c.startX, y: c.startY }, items, cfg.touch);
+        latch.current = { id: hitId, x: c.startX, y: c.startY };
+        scrollAtLatch.current = window.scrollY;
+      }
+      if (c.phase === 'engaged' && c.down) {
+        scrollAtLatch.current = window.scrollY;
+      }
+
+      let authority = 0;
+      if (latch.current && modes.touch) {
+        if (cfg.arbitration.releaseMode === 'scroll') {
+          const d = Math.abs(window.scrollY - scrollAtLatch.current);
+          const a = 1 - smooth((d - cfg.arbitration.takeoverStartPx) /
+            Math.max(1, cfg.arbitration.takeoverFullPx - cfg.arbitration.takeoverStartPx));
+          authority = clamp(a, 0, 1);
+        } else if (cfg.arbitration.releaseMode === 'off-screen') {
+          if (latch.current.id && registry.current.has(latch.current.id)) {
+            const el = registry.current.get(latch.current.id);
+            const r = el.getBoundingClientRect();
+            if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) {
+              authority = 0; 
+            } else {
+              authority = 1;
+            }
+          } else {
+            const d = Math.abs(window.scrollY - scrollAtLatch.current);
+            authority = d > cfg.arbitration.takeoverStartPx ? 0 : 1;
+          }
+        } else {
+          authority = 1;
+        }
+        if (authority <= 0.001) latch.current = null;
+      }
+
+      const items = [];
+      registry.current.forEach((el, id) => { if (el) items.push({ id, rect: el.getBoundingClientRect() }); });
+
+      const screenHits = modes.screen ? resolveScreen(items, vw, vh, cfg.screen) : [];
+      const touchHit = latch.current && latch.current.id 
+          ? { id: latch.current.id, strength: 1, source: 'touch' } 
+          : null;
+      const hits = arbitrate({ screenHits, touchHit, authority, modes });
+
+      const dbg = {
+        phase: c.phase, intent, authority, pointer: { x: c.x, y: c.y },
+        zoneWeight: c.zoneWeight, zoneId: c.zoneId, scrollLocked: c.scrollLocked,
+        holdMs: Math.round(lerp(cfg.touch.holdMsMax, cfg.touch.holdMsMin, c.zoneWeight)),
+        elapsed: c.startTime ? Math.round(((c.endTime ?? now) - c.startTime)) : 0,
+        latch: latch.current, scrollY: Math.round(window.scrollY),
+        takeover: latch.current ? Math.round(Math.abs(window.scrollY - scrollAtLatch.current)) : 0,
+      };
+
+      const key = hits.map(h => h.id + ':' + h.source + ':' + Math.round(h.strength * 40)).join('|')
+        + '#' + dbg.phase + Math.round(intent * 20) + Math.round(authority * 20)
+        + (dbg.latch ? (dbg.latch.id ?? 'empty') + ',' + Math.round(dbg.latch.x) + ',' + Math.round(dbg.latch.y) : '-')
+        + dbg.scrollY + dbg.zoneId + (dbg.phase === 'probing' ? Math.round(c.x/5) + ',' + Math.round(c.y/5) : '');
+      
+      if (key !== publish.current.key) {
+        publish.current.key = key;
+        setOut({ hits, dbg });
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [cfg, modes, enabled, registry]);
+
+  return out;
+}
+
+/* ============================================================================
+   UI Components
+   ==========================================================================*/
+
+const LAYOUTS = {
+  list:   { label:'1 x 10',     resolve:'global',     n:10 },
+  offset: { label:'2 x 5 offset', resolve:'per-column', n:10 },
+  grid:   { label:'3 x 3',      resolve:'per-column', n:9  },
+};
+
+function Card({ id, n, hit, bind, tall }) {
+  const s = hit ? hit.strength : 0;
+  const col = hit ? (hit.source === 'touch' ? 'var(--touch)' : 'var(--screen)') : 'var(--line)';
+  return (
+    <div
+      ref={bind}
+      className={'card' + (tall ? ' portrait' : '')}
+      style={{
+        borderColor: s > 0.02 ? col : 'var(--line)',
+        transform: `scale(${1 + s * 0.035})`,
+        boxShadow: s > 0.02 ? `0 0 0 ${(s * 3).toFixed(2)}px color-mix(in srgb, ${col} ${Math.round(s * 55)}%, transparent)` : 'none',
+      }}
+    >
+      <div className="bar" style={{ background: col, opacity: s }} />
+      <div className="idx mono">{String(n).padStart(2, '0')}</div>
+      <div className="meta mono">
+        {hit ? `${hit.source} ${(s * 100).toFixed(0)}%` : 'idle'}
+      </div>
+    </div>
+  );
+}
+
+function Stage({ layout, hitsById, registry }) {
+  const bind = (id) => (el) => { if (el) registry.current.set(id, el); else registry.current.delete(id); };
+  const mk = (i, tall) => <Card key={i} id={'c' + i} n={i + 1} tall={tall} hit={hitsById.get('c' + i)} bind={bind('c' + i)} />;
+
+  if (layout === 'list') {
+    return <div className="stack">{Array.from({ length: 10 }, (_, i) => mk(i))}</div>;
+  }
+  if (layout === 'offset') {
+    return (
+      <div className="cols">
+        <div className="col" style={{ marginTop: 0 }}>{[0, 2, 4, 6, 8].map(i => mk(i, true))}</div>
+        <div className="col" style={{ marginTop: 78 }}>{[1, 3, 5, 7, 9].map(i => mk(i, true))}</div>
+      </div>
+    );
+  }
+  return <div className="grid3">{Array.from({ length: 9 }, (_, i) => mk(i))}</div>;
+}
+
+function App() {
+  const registry = useRef(new Map());
+  const [layout, setLayout] = useState('list');
+  const [modes, setModes] = useState({ screen: true, touch: true });
+  const [showZones, setShowZones] = useState(true);
+  const [tune, setTune] = useState({
+    anchorRatio: DEFAULTS.screen.anchorRatio,
+    bandRatio: DEFAULTS.screen.bandRatio,
+    rowSplit: DEFAULTS.screen.rowSplit,
+    holdMsMin: DEFAULTS.touch.holdMsMin,
+    engageAt: DEFAULTS.touch.engageAt,
+    outerFalloffPx: DEFAULTS.touch.outerFalloffPx,
+    inBetweenRatio: DEFAULTS.touch.inBetweenRatio,
+    takeoverFullPx: DEFAULTS.arbitration.takeoverFullPx,
+    releaseMode: DEFAULTS.arbitration.releaseMode,
+  });
+
+  const cfg = useMemo(() => ({
+    ...DEFAULTS,
+    screen: { ...DEFAULTS.screen, resolve: LAYOUTS[layout].resolve, anchorRatio: tune.anchorRatio, bandRatio: tune.bandRatio, rowSplit: tune.rowSplit },
+    touch: { ...DEFAULTS.touch, holdMsMin: tune.holdMsMin, engageAt: tune.engageAt, outerFalloffPx: tune.outerFalloffPx, inBetweenRatio: tune.inBetweenRatio },
+    arbitration: { ...DEFAULTS.arbitration, takeoverFullPx: tune.takeoverFullPx, releaseMode: tune.releaseMode },
+  }), [layout, tune]);
+
+  useEffect(() => { registry.current.clear(); }, [layout]);
+
+  const { hits, dbg } = useHoverSenseLab({ registry, cfg, modes, enabled: true });
+  const hitsById = useMemo(() => new Map(hits.map(h => [h.id, h])), [hits]);
+
+  const vh = window.innerHeight, vw = window.innerWidth;
+  const anchorY = vh * cfg.screen.anchorRatio;
+  const bandPx = vh * cfg.screen.bandRatio;
+
+  const Sl = ({ k, label, min, max, step, fmt }) => (
+    <label className="sl">
+      <span>{label} <b className="mono">{fmt ? fmt(tune[k]) : tune[k]}</b></span>
+      <input type="range" min={min} max={max} step={step} value={tune[k]}
+        onChange={e => setTune(t => ({ ...t, [k]: parseFloat(e.target.value) }))} />
+    </label>
+  );
+
+  return (
+    <>
+      {/* Overlays */}
+      {modes.screen && (
+        <>
+          <div className="band" style={{
+            top: anchorY - bandPx, height: bandPx * 2,
+            background: `linear-gradient(to bottom, transparent, color-mix(in srgb, var(--screen) 14%, transparent), transparent)`
+          }} />
+          <div className="anchor" style={{ top: anchorY }}><span className="mono">anchor {cfg.screen.anchorRatio.toFixed(2)}</span></div>
+        </>
+      )}
+      {showZones && modes.touch && cfg.safeZones.map(z => {
+        const f = z.featherPx;
+        return (
+          <div key={z.id} className="zone" style={{
+            left: z.left * vw, top: z.top * vh,
+            width: (z.right - z.left) * vw, height: (z.bottom - z.top) * vh,
+            background: `color-mix(in srgb, var(--dead) ${Math.round((1 - z.weight) * 22)}%, transparent)`,
+            boxShadow: `inset 0 0 ${f}px ${f / 2}px color-mix(in srgb, var(--dead) ${Math.round((1 - z.weight) * 16)}%, transparent)`,
+          }} />
+        );
+      })}
+
+      {/* SVG Progress Timer & Touch Indicator */}
+      {modes.touch && (dbg.phase === 'probing' || dbg.latch) && (
+        <div style={{
+          position: 'fixed', zIndex: 9999, pointerEvents: 'none',
+          left: dbg.phase === 'probing' ? dbg.pointer?.x : dbg.latch?.x,
+          top: dbg.phase === 'probing' ? dbg.pointer?.y : dbg.latch?.y,
+          transform: 'translate(-50%, -50%)'
+        }}>
+          {dbg.phase === 'probing' && !dbg.scrollLocked && dbg.intent > 0 && (
+            <svg width="40" height="40" viewBox="0 0 40 40" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
+              <circle cx="20" cy="20" r="16" fill="none" stroke="var(--touch)" strokeWidth="3"
+                strokeDasharray="100" strokeDashoffset={100 - (dbg.intent * 100)} opacity="0.8" />
+            </svg>
+          )}
+          {dbg.latch && (
+            <div className="dot" style={{
+              position: 'relative', left: 'auto', top: 'auto', margin: 0,
+              opacity: dbg.latch.id ? (0.25 + dbg.authority * 0.75) : 0.4,
+              borderColor: dbg.latch.id ? 'var(--touch)' : 'var(--dead)',
+              borderStyle: dbg.latch.id ? 'solid' : 'dashed',
+            }}>
+              {dbg.latch.id && <i />}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* HUD Header */}
+      <div className="hud">
+        <div className="hud-row mono">
+          <span className="kv"><b>system</b>HoverSense</span>
+          <span className="kv"><b>phase</b>{dbg.phase}</span>
+          <span className="kv"><b>intent</b>{(dbg.intent ?? 0).toFixed(2)}</span>
+          <span className="kv"><b>authority</b>{(dbg.authority ?? 0).toFixed(2)}</span>
+          <span className="kv"><b>zone</b>{(dbg.zoneWeight ?? 1).toFixed(2)}{dbg.zoneId ? ' ' + dbg.zoneId : ''}</span>
+          <span className="kv"><b>hold</b>{dbg.elapsed}/{dbg.holdMs}ms</span>
+          <span className="kv"><b>scroll-lock</b>{dbg.scrollLocked ? 'yes' : 'no'}</span>
+          <span className="kv"><b>takeover</b>{cfg.arbitration.releaseMode === 'scroll' ? dbg.takeover + 'px' : cfg.arbitration.releaseMode}</span>
+          <span className="kv"><b>hover</b>{hits.length ? hits.map(h => h.id + ':' + h.source).join(' ') : 'none (deselected)'}</span>
+        </div>
+      </div>
+
+      {/* Stage Container */}
+      <div id="stage" style={{ paddingTop: 96 }}>
+        <Stage layout={layout} hitsById={hitsById} registry={registry} />
+      </div>
+
+      {/* Bottom Control Dock */}
+      <div className="dock">
+        <div className="btnrow">
+          <button className="ch-screen" data-on={modes.screen ? 1 : 0}
+            onClick={() => setModes(m => ({ ...m, screen: !m.screen }))}>Screen channel</button>
+          <button className="ch-touch" data-on={modes.touch ? 1 : 0}
+            onClick={() => setModes(m => ({ ...m, touch: !m.touch }))}>Touch channel</button>
+          {Object.entries(LAYOUTS).map(([k, v]) => (
+            <button key={k} data-on={layout === k ? 1 : 0} onClick={() => setLayout(k)}>{v.label}</button>
+          ))}
+          <button data-on={showZones ? 1 : 0} onClick={() => setShowZones(s => !s)}>Safe zones</button>
+        </div>
+        <details>
+          <summary>Fine-Tuning & Biomechanical Controls</summary>
+          <div className="sliders">
+            <Sl k="anchorRatio" label="anchor ratio" min="0.15" max="0.85" step="0.01" fmt={v => v.toFixed(2)} />
+            <Sl k="bandRatio" label="falloff band" min="0.08" max="0.8" step="0.01" fmt={v => v.toFixed(2)} />
+            <Sl k="rowSplit" label="in-row split" min="0" max="1" step="0.05" fmt={v => v === 0 ? 'all (100%)' : (v*100).toFixed(0) + '%'} />
+            <Sl k="holdMsMin" label="min hold" min="120" max="900" step="10" fmt={v => v + 'ms'} />
+            <Sl k="engageAt" label="engage at" min="0.2" max="1" step="0.05" fmt={v => (v*100).toFixed(0) + '%'} />
+            <Sl k="outerFalloffPx" label="outer falloff" min="0" max="150" step="2" fmt={v => v + 'px'} />
+            <Sl k="inBetweenRatio" label="in-between gap" min="0" max="1" step="0.05" fmt={v => (v*100).toFixed(0) + '%'} />
+            <Sl k="takeoverFullPx" label="takeover dist" min="200" max="1600" step="20" fmt={v => v + 'px'} />
+            <label className="sl">
+              <span>release mode</span>
+              <select style={{width:'100%', background:'transparent', color:'inherit', border:'1px solid var(--line)', padding:'2px', fontSize:'10px', borderRadius:'4px'}} value={tune.releaseMode} onChange={e => setTune(t => ({...t, releaseMode: e.target.value}))}>
+                <option value="scroll" style={{background: 'var(--bg)'}}>Scroll dist</option>
+                <option value="off-screen" style={{background: 'var(--bg)'}}>Off-screen</option>
+                <option value="never" style={{background: 'var(--bg)'}}>Never</option>
+              </select>
+            </label>
+          </div>
+        </details>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+  "name": "hoversense",
+  "version": "1.0.0",
+  "description": "Framework-agnostic pointerless interaction library for touch interfaces.",
+  "main": "./dist/hoversense.cjs.js",
+  "module": "./dist/hoversense.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/hoversense.es.js",
+      "require": "./dist/hoversense.cjs.js"
+    },
+    "./math": {
+      "types": "./dist/math.d.ts",
+      "import": "./dist/math.es.js",
+      "require": "./dist/math.cjs.js"
+    }
+  },
+  "files": [
+    "dist",
+    "math",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.build.json && vite build",
+    "preview": "vite preview",
+    "test:math": "node test/math.test.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "hoversense",
+    "spatial-hover",
+    "pointerless",
+    "touch",
+    "mobile",
+    "hover",
+    "gesture",
+    "interaction-design",
+    "framework-agnostic"
+  ],
+  "author": "EaZy (https://github.com/EaZyStudiio)",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  }
+}

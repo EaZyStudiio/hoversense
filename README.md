@@ -4,20 +4,37 @@ HoverSense is a framework-agnostic pointerless interaction library for touch int
 
 It lets interfaces respond to where a user is looking, touching, holding, dragging, and scrolling without requiring the user to learn a new gesture.
 
-[Live Interactive Demo](https://eazystudiio.github.io/hoversense/) | [Mathematical Specification](docs/SPECIFICATION.md) | [Integration Recipes](docs/INTEGRATION.md)
+[Live Interactive Demo](https://eazystudiio.github.io/hoversense/) | [Developer Handbook](docs/DEVELOPER_GUIDE.md) | [Mathematical Specification](docs/SPECIFICATION.md) | [Integration Recipes](docs/INTEGRATION.md)
+
+### 1-Line Turnkey Setup
+
+```ts
+import { createHoverSenseContainer } from 'hoversense';
+import 'hoversense/dist/hoversense.css';
+
+// Automatically configures touch hygiene, discovers items, binds CSS variables, and renders feedback
+const controller = createHoverSenseContainer('#my-cards', {
+  itemSelector: '.card',
+  feedback: true,
+});
+```
+
+### Headless Engine Setup
 
 ```ts
 import { HoverSense } from 'hoversense';
 
 const hover = new HoverSense({
   screen: { anchorRatio: 0.42, bandRatio: 0.30 },
-  touch: { holdMsMin: 320, engageAt: 1.0 }
+  touch: { holdMsMin: 320, engageAt: 0.90 },
+  bindCssVariables: true,
 });
 
 // Register any DOM element, ref, or dynamic bounding rect
 document.querySelectorAll('.card').forEach((el, index) => {
   hover.register(`card-${index}`, el);
 });
+
 
 // Listen to spatial hover changes
 hover.onHover((hits) => {

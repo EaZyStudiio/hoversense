@@ -18,11 +18,14 @@ import {
   getHitUnderPoint,
   arbitrate,
 } from './math';
+import { CssVariableBinder, applyTouchHygiene } from './css';
+import { HoverSenseFeedback } from './feedback';
 import type {
   Rect,
   MeasuredItem,
   HoverSenseConfig,
   HoverSenseOptions,
+  ContainerOptions,
   GestureState,
   TouchLatch,
   HoverHit,
@@ -66,6 +69,9 @@ export class HoverSense {
   private rafId = 0;
   private lastStateKey = '';
 
+  private cssBinder: CssVariableBinder | null = null;
+  private feedbackOverlay: HoverSenseFeedback | null = null;
+
   private currentState: HoverSenseState = {
     hits: [],
     hitsById: new Map(),
@@ -100,6 +106,10 @@ export class HoverSense {
   constructor(options?: HoverSenseOptions, stage?: HTMLElement | Window | string) {
     this.config = this.mergeOptions(DEFAULT_CONFIG, options);
 
+    if (options?.bindCssVariables) {
+      this.cssBinder = new CssVariableBinder();
+    }
+
     this.handlePointerDown = this.onPointerDown.bind(this);
     this.handlePointerMove = this.onPointerMove.bind(this);
     this.handlePointerUp = this.onPointerUp.bind(this);
@@ -115,9 +125,23 @@ export class HoverSense {
         this.stageElement = window;
       }
       this.attachEvents();
+
+      if (options?.feedback) {
+        this.feedbackOverlay = new HoverSenseFeedback();
+        this.feedbackOverlay.attach(this);
+      }
+
       this.start();
     }
   }
+
+  /**
+   * Returns the visual feedback overlay instance if active.
+   */
+  public getFeedback(): HoverSenseFeedback | null {
+    return this.feedbackOverlay;
+  }
+
 
   /**
    * Deeply merges user options with current configuration.
@@ -270,6 +294,14 @@ export class HoverSense {
   public destroy(): void {
     this.stop();
     this.detachEvents();
+    if (this.cssBinder) {
+      this.cssBinder.clear();
+      this.cssBinder = null;
+    }
+    if (this.feedbackOverlay) {
+      this.feedbackOverlay.destroy();
+      this.feedbackOverlay = null;
+    }
     this.registry.clear();
     this.hoverListeners.clear();
     this.stateListeners.clear();
@@ -412,6 +444,17 @@ export class HoverSense {
     const newState: HoverSenseState = { hits, hitsById, debug };
     this.currentState = newState;
 
+    // Direct CSS custom property injection (zero-render styling at 60fps)
+    if (this.cssBinder) {
+      const elementsById = new Map<string, HTMLElement | null>();
+      for (const [id, entry] of this.registry.entries()) {
+        if (entry.target && typeof entry.target === 'object' && 'style' in entry.target) {
+          elementsById.set(id, entry.target as HTMLElement);
+        }
+      }
+      this.cssBinder.update(hits, elementsById, Boolean(this.latch));
+    }
+
     // 5. Deduplicated event emission
     const stateKey = hits.map(h => `${h.id}:${h.source}:${Math.round(h.strength * 50)}`).join('|')
       + '#' + debug.phase + Math.round(intent * 20) + Math.round(authority * 20)
@@ -535,3 +578,119 @@ export function createHoverSense(
 ): HoverSense {
   return new HoverSense(options, stage);
 }
+
+export interface HoverSenseContainerController {
+  /** The underlying HoverSense engine instance */
+  engine: HoverSense;
+  /** The visual feedback overlay instance, if enabled */
+  feedback: HoverSenseFeedback | null;
+  /** Re-scans the container for interactive items */
+  refresh(): void;
+  /** Cleans up all listeners, observers, feedback overlays, and CSS variables */
+  destroy(): void;
+}
+
+/**
+ * Turnkey helper that transforms any container element into a spatial hover experience.
+ * Automatically handles touch hygiene, item discovery, mutation observation,
+ * CSS custom property injection, and visual feedback overlays.
+ *
+ * Example:
+ * ```ts
+ * const controller = createHoverSenseContainer('#my-grid', {
+ *   itemSelector: '.card',
+ *   feedback: true,
+ * });
+ * ```
+ */
+export function createHoverSenseContainer(
+  container: HTMLElement | string,
+  options?: ContainerOptions
+): HoverSenseContainerController {
+  const containerEl = typeof container === 'string'
+    ? (typeof document !== 'undefined' ? document.querySelector<HTMLElement>(container) : null)
+    : container;
+
+  const engine = new HoverSense(
+    {
+      ...options,
+      bindCssVariables: options?.bindCssVariables ?? true,
+      feedback: options?.feedback ?? true,
+    },
+    containerEl ?? undefined
+  );
+
+  if (!containerEl || typeof window === 'undefined') {
+    return {
+      engine,
+      feedback: engine.getFeedback(),
+      refresh: () => {},
+      destroy: () => engine.destroy(),
+    };
+  }
+
+  if (options?.applyHygiene !== false) {
+    applyTouchHygiene(containerEl);
+  }
+
+  const selector = options?.itemSelector ?? '[data-hs-item], .hs-item, .card';
+  let autoIdCounter = 0;
+  const registeredElements = new Map<HTMLElement, string>();
+
+  const registerItem = (el: HTMLElement) => {
+    if (registeredElements.has(el)) return;
+    const id = el.getAttribute('data-hs-id') || el.id || `hs-item-${++autoIdCounter}`;
+    registeredElements.set(el, id);
+    engine.register(id, el);
+  };
+
+  const unregisterItem = (el: HTMLElement) => {
+    const id = registeredElements.get(el);
+    if (id) {
+      registeredElements.delete(el);
+      engine.unregister(id);
+    }
+  };
+
+  const refresh = () => {
+    const items = containerEl.querySelectorAll<HTMLElement>(selector);
+    const found = new Set<HTMLElement>();
+    items.forEach(el => {
+      found.add(el);
+      registerItem(el);
+    });
+
+    for (const [el] of registeredElements.entries()) {
+      if (!found.has(el) && !containerEl.contains(el)) {
+        unregisterItem(el);
+      }
+    }
+  };
+
+  refresh();
+
+  let observer: MutationObserver | null = null;
+  if (options?.observeMutations !== false && typeof MutationObserver !== 'undefined') {
+    observer = new MutationObserver(() => {
+      refresh();
+    });
+    observer.observe(containerEl, { childList: true, subtree: true });
+  }
+
+  const destroy = () => {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+    registeredElements.clear();
+    engine.destroy();
+  };
+
+  return {
+    engine,
+    feedback: engine.getFeedback(),
+    refresh,
+    destroy,
+  };
+}
+

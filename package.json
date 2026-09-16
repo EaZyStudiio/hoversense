@@ -26,7 +26,8 @@
       "types": "./dist/math.d.ts",
       "import": "./dist/hoversense.es.js",
       "require": "./dist/hoversense.cjs.js"
-    }
+    },
+    "./hoversense.css": "./dist/hoversense.css"
   },
   "files": [
     "dist",
@@ -36,9 +37,11 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.build.json && vite build",
+    "build": "tsc -p tsconfig.build.json && vite build && node -e \"fs.copyFileSync('src/hoversense.css', 'dist/hoversense.css')\"",
     "preview": "vite preview",
+    "test": "node test/math.test.mjs && node test/css.test.mjs",
     "test:math": "node test/math.test.mjs",
+    "test:css": "node test/css.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

@@ -1,0 +1,88 @@
+/**
+ * HoverSense Default Stylesheet
+ *
+ * Essential touch hygiene and hardware-accelerated transform hooks.
+ * Zero-render performance: elements animate directly from CSS variables.
+ */
+
+/* 1. Mobile Touch Hygiene: Apply to stage or list container */
+.hs-stage,
+[data-hs-stage] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+
+/* 2. Interactive Item Baseline: Apply to hoverable cards or list items */
+.hs-item,
+[data-hs-item] {
+  /* Ultra-low latency 90ms linear interpolation */
+  transition:
+    transform 90ms linear,
+    box-shadow 90ms linear,
+    border-color 90ms linear;
+  will-change: transform;
+}
+
+/* 3. Hardware-Accelerated Dynamic Scaling */
+.hs-item-scale,
+[data-hs-scale] {
+  transform: scale(calc(1 + var(--hs-strength, 0) * 0.038));
+}
+
+/* 4. Visual Feedback Overlays */
+.hs-feedback-root {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  will-change: left, top;
+}
+
+.hs-feedback-progress {
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.hs-feedback-circle {
+  fill: none;
+  stroke: var(--hs-accent-color, #5b46d9);
+  stroke-width: 3;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  opacity: 0.85;
+  transition: stroke-dashoffset 30ms linear;
+}
+
+.hs-feedback-latch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--hs-accent-color, #5b46d9);
+  box-shadow: 0 0 12px rgba(91, 70, 217, 0.4);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 120ms ease;
+}
+
+.hs-feedback-latch::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hs-accent-color, #5b46d9);
+}
+
+.hs-feedback-latch.hs-empty {
+  border-style: dashed;
+  border-color: #8a8fa3;
+  box-shadow: none;
+}
+
+.hs-feedback-latch.hs-empty::after {
+  display: none;
+}

@@ -6,7 +6,26 @@
  * dragging, and scrolling without requiring the user to learn a new gesture.
  */
 
-export { HoverSense, createHoverSense } from './engine';
+export {
+  HoverSense,
+  createHoverSense,
+  createHoverSenseContainer,
+  type HoverSenseContainerController,
+} from './engine';
 export { DEFAULT_CONFIG, DEFAULT_SAFE_ZONES } from './defaults';
+export {
+  CSS_VARS,
+  DATA_ATTRS,
+  TOUCH_HYGIENE_STYLES,
+  applyTouchHygiene,
+  CssVariableBinder,
+  type CssBinderOptions,
+} from './css';
+export {
+  HoverSenseFeedback,
+  createHoverSenseFeedback,
+  type FeedbackOverlayOptions,
+} from './feedback';
 export * from './math';
 export * from './types';
+

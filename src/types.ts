@@ -154,7 +154,21 @@ export interface HoverSenseOptions {
     screen?: boolean;
     touch?: boolean;
   };
+  /** Automatically update CSS custom properties (--hs-strength, --hs-source, --hs-latched) on registered elements (default: false) */
+  bindCssVariables?: boolean;
+  /** Automatically display visual feedback overlay (radial dwell ring and latch dot) (default: false) */
+  feedback?: boolean;
 }
+
+export interface ContainerOptions extends HoverSenseOptions {
+  /** CSS selector for interactive items inside the container (default: '[data-hs-item], .hs-item, .card') */
+  itemSelector?: string;
+  /** Automatically detect dynamically added/removed items via MutationObserver (default: true) */
+  observeMutations?: boolean;
+  /** Apply mobile touch hygiene styles to the container (default: true) */
+  applyHygiene?: boolean;
+}
+
 
 export type GesturePhase = 'idle' | 'probing' | 'engaged';
 

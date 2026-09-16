@@ -101,17 +101,54 @@
   button.btn-guide{border-color:var(--accent);color:var(--accent);font-weight:600}
 
   .sliders{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:10px}
-  .sl{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted)}
-  .sl-header{display:flex;justify-content:space-between;align-items:center}
+  .sl{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);touch-action:none}
+  .sl-header{display:flex;justify-content:space-between;align-items:center;user-select:none}
   .sl-header span{font-weight:500;color:var(--fg)}
-  .sl input[type="range"]{
+
+  /* Custom Touch-Friendly Draggable Slider Tracks */
+  .custom-track{
+    position:relative;
     width:100%;
-    height:24px;
+    height:28px;
+    display:flex;
+    align-items:center;
     cursor:pointer;
-    touch-action:pan-x;
-    margin:0;
-    accent-color:var(--accent);
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
   }
+  .custom-bar{
+    width:100%;
+    height:6px;
+    border-radius:3px;
+    background:var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+  .custom-fill{
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    background:var(--accent);
+    border-radius:3px;
+  }
+  .custom-thumb{
+    position:absolute;
+    width:20px;
+    height:20px;
+    margin-left:-10px;
+    border-radius:50%;
+    background:var(--panel);
+    border:2.5px solid var(--accent);
+    box-shadow:0 2px 8px rgba(0,0,0,0.22);
+    pointer-events:none;
+    transition:transform 80ms ease;
+  }
+  .custom-track:active .custom-thumb{
+    transform:scale(1.18);
+  }
+
   details{margin-top:8px}
   details>summary{cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);padding:4px 0}
 
@@ -190,7 +227,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
 <script type="text/babel" data-presets="react">
-const { useState, useRef, useEffect, useMemo } = React;
+const { useState, useRef, useEffect, useMemo, useCallback } = React;
 
 /* ============================================================================
    HoverSense Pure Mathematics Module
@@ -410,7 +447,7 @@ function arbitrate({ screenHits, touchHit, authority, modes }) {
 }
 
 /* ============================================================================
-   React Adapter Hook
+   React Adapter Hook with Persistent Stable Handlers
    ==========================================================================*/
 
 const newGesture = () => ({
@@ -429,20 +466,27 @@ function useHoverSenseLab({ registry, cfg, modes, enabled }) {
   const [out, setOut] = useState({ hits: [], dbg: {} });
   const publish = useRef({ key: '' });
 
+  // Store cfg and modes in refs so event listeners remain attached without tearing down during slider drag
+  const cfgRef = useRef(cfg);
+  const modesRef = useRef(modes);
+  cfgRef.current = cfg;
+  modesRef.current = modes;
+
   useEffect(() => {
     const stage = document.getElementById('stage');
     if (!stage) return;
     const vw = () => window.innerWidth, vh = () => window.innerHeight;
 
     const down = (e) => {
+      const currentCfg = cfgRef.current;
       const items = [];
       registry.current.forEach((el, id) => { if (el) items.push({ id, rect: el.getBoundingClientRect() }); });
-      const hitId = getHitUnderPoint({ x: e.clientX, y: e.clientY }, items, cfg.touch);
+      const hitId = getHitUnderPoint({ x: e.clientX, y: e.clientY }, items, currentCfg.touch);
       const isTargetHit = hitId !== null;
 
       const z = isTargetHit 
         ? { weight: 1, zoneId: null }
-        : sampleZones({ x: e.clientX, y: e.clientY }, cfg.safeZones, vw(), vh());
+        : sampleZones({ x: e.clientX, y: e.clientY }, currentCfg.safeZones, vw(), vh());
 
       g.current = {
         ...newGesture(),
@@ -454,29 +498,31 @@ function useHoverSenseLab({ registry, cfg, modes, enabled }) {
     };
 
     const move = (e) => {
+      const currentCfg = cfgRef.current;
       const c = g.current;
       if (!c.down) return;
       c.x = e.clientX; c.y = e.clientY; c.lastTime = performance.now();
       if (c.phase === 'probing' && !c.scrollLocked) {
         const dt = c.lastTime - c.startTime;
         const dx = Math.abs(c.x - c.startX), dy = Math.abs(c.y - c.startY);
-        if (dt <= cfg.touch.scrollLockGraceMs &&
-            dy > cfg.touch.dragDeadzonePx &&
-            dy > dx * cfg.touch.scrollLockAxisRatio) {
+        if (dt <= currentCfg.touch.scrollLockGraceMs &&
+            dy > currentCfg.touch.dragDeadzonePx &&
+            dy > dx * currentCfg.touch.scrollLockAxisRatio) {
           c.scrollLocked = true;
         }
       }
     };
 
     const up = () => {
+      const currentCfg = cfgRef.current;
       const c = g.current;
       if (!c.down) return;
       c.down = false;
       c.endTime = performance.now();
       if (c.phase === 'engaged') {
         scrollAtLatch.current = window.scrollY;
-      } else if (isTap(c, cfg.touch)) {
-        if (cfg.touch.clearLatchOnTap) latch.current = null;
+      } else if (isTap(c, currentCfg.touch)) {
+        if (currentCfg.touch.clearLatchOnTap) latch.current = null;
       }
       c.phase = 'idle';
     };
@@ -491,9 +537,14 @@ function useHoverSenseLab({ registry, cfg, modes, enabled }) {
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
     };
-  }, [cfg, modes]);
+  }, [registry]);
 
-  useEffect(() => { if (!modes.touch) { latch.current = null; g.current = newGesture(); } }, [modes.touch]);
+  useEffect(() => {
+    if (!modes.touch) {
+      latch.current = null;
+      g.current = newGesture();
+    }
+  }, [modes.touch]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -503,15 +554,17 @@ function useHoverSenseLab({ registry, cfg, modes, enabled }) {
       const now = performance.now();
       const vw = window.innerWidth, vh = window.innerHeight;
       const c = g.current;
+      const currentCfg = cfgRef.current;
+      const currentModes = modesRef.current;
 
       const intent = (c.phase === 'probing' || c.phase === 'engaged')
-        ? computeIntent(c, cfg.touch, now) : 0;
+        ? computeIntent(c, currentCfg.touch, now) : 0;
 
-      if (c.phase === 'probing' && intent >= cfg.touch.engageAt) {
+      if (c.phase === 'probing' && intent >= currentCfg.touch.engageAt) {
         c.phase = 'engaged';
         const items = [];
         registry.current.forEach((el, id) => { if (el) items.push({ id, rect: el.getBoundingClientRect() }); });
-        const hitId = getHitUnderPoint({ x: c.startX, y: c.startY }, items, cfg.touch);
+        const hitId = getHitUnderPoint({ x: c.startX, y: c.startY }, items, currentCfg.touch);
         latch.current = { id: hitId, x: c.startX, y: c.startY };
         scrollAtLatch.current = window.scrollY;
       }
@@ -520,13 +573,13 @@ function useHoverSenseLab({ registry, cfg, modes, enabled }) {
       }
 
       let authority = 0;
-      if (latch.current && modes.touch) {
-        if (cfg.arbitration.releaseMode === 'scroll') {
+      if (latch.current && currentModes.touch) {
+        if (currentCfg.arbitration.releaseMode === 'scroll') {
           const d = Math.abs(window.scrollY - scrollAtLatch.current);
-          const a = 1 - smooth((d - cfg.arbitration.takeoverStartPx) /
-            Math.max(1, cfg.arbitration.takeoverFullPx - cfg.arbitration.takeoverStartPx));
+          const a = 1 - smooth((d - currentCfg.arbitration.takeoverStartPx) /
+            Math.max(1, currentCfg.arbitration.takeoverFullPx - currentCfg.arbitration.takeoverStartPx));
           authority = clamp(a, 0, 1);
-        } else if (cfg.arbitration.releaseMode === 'off-screen') {
+        } else if (currentCfg.arbitration.releaseMode === 'off-screen') {
           if (latch.current.id && registry.current.has(latch.current.id)) {
             const el = registry.current.get(latch.current.id);
             const r = el.getBoundingClientRect();
@@ -537,7 +590,7 @@ function useHoverSenseLab({ registry, cfg, modes, enabled }) {
             }
           } else {
             const d = Math.abs(window.scrollY - scrollAtLatch.current);
-            authority = d > cfg.arbitration.takeoverStartPx ? 0 : 1;
+            authority = d > currentCfg.arbitration.takeoverStartPx ? 0 : 1;
           }
         } else {
           authority = 1;
@@ -548,16 +601,16 @@ function useHoverSenseLab({ registry, cfg, modes, enabled }) {
       const items = [];
       registry.current.forEach((el, id) => { if (el) items.push({ id, rect: el.getBoundingClientRect() }); });
 
-      const screenHits = modes.screen ? resolveScreen(items, vw, vh, cfg.screen) : [];
+      const screenHits = currentModes.screen ? resolveScreen(items, vw, vh, currentCfg.screen) : [];
       const touchHit = latch.current && latch.current.id 
           ? { id: latch.current.id, strength: 1, source: 'touch' } 
           : null;
-      const hits = arbitrate({ screenHits, touchHit, authority, modes });
+      const hits = arbitrate({ screenHits, touchHit, authority, modes: currentModes });
 
       const dbg = {
         phase: c.phase, intent, authority, pointer: { x: c.x, y: c.y },
         zoneWeight: c.zoneWeight, zoneId: c.zoneId, scrollLocked: c.scrollLocked,
-        holdMs: Math.round(lerp(cfg.touch.holdMsMax, cfg.touch.holdMsMin, c.zoneWeight)),
+        holdMs: Math.round(lerp(currentCfg.touch.holdMsMax, currentCfg.touch.holdMsMin, c.zoneWeight)),
         elapsed: c.startTime ? Math.round(((c.endTime ?? now) - c.startTime)) : 0,
         latch: latch.current, scrollY: Math.round(window.scrollY),
         takeover: latch.current ? Math.round(Math.abs(window.scrollY - scrollAtLatch.current)) : 0,
@@ -575,7 +628,7 @@ function useHoverSenseLab({ registry, cfg, modes, enabled }) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [cfg, modes, enabled, registry]);
+  }, [enabled, registry]);
 
   return out;
 }
@@ -637,6 +690,71 @@ const TUNING_EXPLANATIONS = {
     fmt: v => v
   }
 };
+
+/**
+ * Robust Custom Draggable Slider Component
+ * Defined OUTSIDE App to guarantee continuous touch pointer dragging without re-mounting DOM nodes.
+ */
+function TouchSlider({ label, value, min, max, step, fmt, onChange, onDragStart, onDragEnd }) {
+  const trackRef = useRef(null);
+  const isDragging = useRef(false);
+
+  const updateFromPointer = (clientX) => {
+    if (!trackRef.current) return;
+    const rect = trackRef.current.getBoundingClientRect();
+    const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
+    let rawVal = min + ratio * (max - min);
+    if (step) {
+      rawVal = Math.round((rawVal - min) / step) * step + min;
+    }
+    const finalVal = clamp(Number(rawVal.toFixed(4)), min, max);
+    onChange(finalVal);
+  };
+
+  const handlePointerDown = (e) => {
+    isDragging.current = true;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+    updateFromPointer(e.clientX);
+    if (onDragStart) onDragStart();
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging.current) return;
+    updateFromPointer(e.clientX);
+  };
+
+  const handlePointerUp = (e) => {
+    if (isDragging.current) {
+      isDragging.current = false;
+      try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (_) {}
+      if (onDragEnd) onDragEnd();
+    }
+  };
+
+  const pct = clamp(((value - min) / (max - min)) * 100, 0, 100);
+
+  return (
+    <div className="sl">
+      <div className="sl-header">
+        <span>{label}</span>
+        <b className="mono">{fmt ? fmt(value) : value}</b>
+      </div>
+      <div
+        ref={trackRef}
+        className="custom-track"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        <div className="custom-bar">
+          <div className="custom-fill" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="custom-thumb" style={{ left: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
 
 function Card({ id, n, hit, bind, tall }) {
   const s = hit ? hit.strength : 0;
@@ -701,8 +819,6 @@ function App() {
 
   const selectLayout = (k) => {
     setLayout(k);
-    // When switching to multi-column 2x5 or 3x3, recommend and auto-set rowSplit to 100%
-    // When switching to 1x10 list, set rowSplit to 0%
     const recSplit = LAYOUTS[k].defaultSplit;
     setTune(t => ({ ...t, rowSplit: recSplit }));
     triggerReadout('rowSplit', recSplit);
@@ -724,7 +840,7 @@ function App() {
   const anchorY = vh * cfg.screen.anchorRatio;
   const bandPx = vh * cfg.screen.bandRatio;
 
-  const triggerReadout = (key, val) => {
+  const triggerReadout = useCallback((key, val) => {
     const meta = TUNING_EXPLANATIONS[key];
     if (!meta) return;
     setActiveReadout({
@@ -737,33 +853,7 @@ function App() {
     readoutTimer.current = setTimeout(() => {
       setActiveReadout(null);
     }, 1400);
-  };
-
-  const Sl = ({ k, label, min, max, step, fmt }) => (
-    <label className="sl">
-      <div className="sl-header">
-        <span>{label}</span>
-        <b className="mono">{fmt ? fmt(tune[k]) : tune[k]}</b>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={tune[k]}
-        onInput={e => {
-          const val = parseFloat(e.target.value);
-          setTune(t => ({ ...t, [k]: val }));
-          triggerReadout(k, val);
-        }}
-        onChange={e => {
-          const val = parseFloat(e.target.value);
-          setTune(t => ({ ...t, [k]: val }));
-          triggerReadout(k, val);
-        }}
-      />
-    </label>
-  );
+  }, []);
 
   return (
     <>
@@ -913,16 +1003,80 @@ function App() {
           <button className="btn-guide" onClick={() => setShowGuide(true)}>Guide & Tuning</button>
         </div>
         <details open>
-          <summary>Fine-Tuning & Biomechanical Controls (Drag to Adjust)</summary>
+          <summary>Fine-Tuning & Biomechanical Controls (Smooth Continuous Drag)</summary>
           <div className="sliders">
-            <Sl k="anchorRatio" label="anchor ratio" min="0.15" max="0.85" step="0.01" fmt={v => v.toFixed(2)} />
-            <Sl k="bandRatio" label="falloff band" min="0.08" max="0.8" step="0.01" fmt={v => v.toFixed(2)} />
-            <Sl k="rowSplit" label="in-row split" min="0" max="1" step="0.05" fmt={v => v === 0 ? '0% (together)' : (v*100).toFixed(0) + '%'} />
-            <Sl k="holdMsMin" label="min hold" min="120" max="900" step="10" fmt={v => v + 'ms'} />
-            <Sl k="engageAt" label="engage at" min="0.2" max="1" step="0.05" fmt={v => (v*100).toFixed(0) + '%'} />
-            <Sl k="outerFalloffPx" label="outer falloff" min="0" max="150" step="2" fmt={v => v + 'px'} />
-            <Sl k="inBetweenRatio" label="in-between gap" min="0" max="1" step="0.05" fmt={v => (v*100).toFixed(0) + '%'} />
-            <Sl k="takeoverFullPx" label="takeover dist" min="200" max="1600" step="20" fmt={v => v + 'px'} />
+            <TouchSlider
+              label="anchor ratio"
+              value={tune.anchorRatio}
+              min={0.15}
+              max={0.85}
+              step={0.01}
+              fmt={v => v.toFixed(2)}
+              onChange={val => { setTune(t => ({ ...t, anchorRatio: val })); triggerReadout('anchorRatio', val); }}
+            />
+            <TouchSlider
+              label="falloff band"
+              value={tune.bandRatio}
+              min={0.08}
+              max={0.80}
+              step={0.01}
+              fmt={v => v.toFixed(2)}
+              onChange={val => { setTune(t => ({ ...t, bandRatio: val })); triggerReadout('bandRatio', val); }}
+            />
+            <TouchSlider
+              label="in-row split"
+              value={tune.rowSplit}
+              min={0}
+              max={1}
+              step={0.05}
+              fmt={v => v === 0 ? '0% (together)' : (v*100).toFixed(0) + '%'}
+              onChange={val => { setTune(t => ({ ...t, rowSplit: val })); triggerReadout('rowSplit', val); }}
+            />
+            <TouchSlider
+              label="min hold"
+              value={tune.holdMsMin}
+              min={120}
+              max={900}
+              step={10}
+              fmt={v => v + 'ms'}
+              onChange={val => { setTune(t => ({ ...t, holdMsMin: val })); triggerReadout('holdMsMin', val); }}
+            />
+            <TouchSlider
+              label="engage at"
+              value={tune.engageAt}
+              min={0.20}
+              max={1.00}
+              step={0.05}
+              fmt={v => (v*100).toFixed(0) + '%'}
+              onChange={val => { setTune(t => ({ ...t, engageAt: val })); triggerReadout('engageAt', val); }}
+            />
+            <TouchSlider
+              label="outer falloff"
+              value={tune.outerFalloffPx}
+              min={0}
+              max={150}
+              step={2}
+              fmt={v => v + 'px'}
+              onChange={val => { setTune(t => ({ ...t, outerFalloffPx: val })); triggerReadout('outerFalloffPx', val); }}
+            />
+            <TouchSlider
+              label="in-between gap"
+              value={tune.inBetweenRatio}
+              min={0}
+              max={1}
+              step={0.05}
+              fmt={v => (v*100).toFixed(0) + '%'}
+              onChange={val => { setTune(t => ({ ...t, inBetweenRatio: val })); triggerReadout('inBetweenRatio', val); }}
+            />
+            <TouchSlider
+              label="takeover dist"
+              value={tune.takeoverFullPx}
+              min={200}
+              max={1600}
+              step={20}
+              fmt={v => v + 'px'}
+              onChange={val => { setTune(t => ({ ...t, takeoverFullPx: val })); triggerReadout('takeoverFullPx', val); }}
+            />
             <label className="sl">
               <div className="sl-header">
                 <span>release mode</span>

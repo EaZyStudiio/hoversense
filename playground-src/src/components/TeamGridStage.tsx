@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import type { TeamMember, TelemetryData, TuningConfig, VisualGuidesConfig } from '../types';
 import { HoverSense, type HoverSenseState, type HoverHit } from '../../../src';
 import { createSvgThumbnail } from '../data';
@@ -25,7 +25,33 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
 }) => {
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const stageContentRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<HoverSense | null>(null);
+
+  // Anchor guide position mapped from browser viewport into phone-frame-local coords
+  const [anchorGuideTop, setAnchorGuideTop] = useState<number | null>(null);
+  const [bandGuideTop, setBandGuideTop] = useState<number | null>(null);
+  const [bandGuideHeight, setBandGuideHeight] = useState<number | null>(null);
+
+  const recalcAnchorGuide = useCallback(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const anchorY = vh * tuning.anchorRatio;
+    setAnchorGuideTop(anchorY - wrapperRect.top);
+
+    const bandTopY = vh * Math.max(0, tuning.anchorRatio - tuning.bandRatio / 2);
+    const bandBottomY = vh * Math.min(1, tuning.anchorRatio + tuning.bandRatio / 2);
+    setBandGuideTop(bandTopY - wrapperRect.top);
+    setBandGuideHeight(bandBottomY - bandTopY);
+  }, [tuning.anchorRatio, tuning.bandRatio]);
+
+  useEffect(() => {
+    recalcAnchorGuide();
+    window.addEventListener('resize', recalcAnchorGuide, { passive: true });
+    return () => window.removeEventListener('resize', recalcAnchorGuide);
+  }, [recalcAnchorGuide]);
 
   // Mobile Touch Simulation on Desktop: Click and drag as swipe
   useTouchDragScroll<HTMLDivElement>({ enabled: !!touchSim }, scrollViewportRef);
@@ -131,12 +157,12 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
   ];
 
   return (
-    <div className="collective-viewport-wrapper">
+    <div ref={wrapperRef} className="collective-viewport-wrapper">
       {/* Visual Gaze Anchor Line (Stationary over mobile viewport) */}
-      {guides.showAnchorLine && tuning.screenChannelEnabled !== false && (
+      {guides.showAnchorLine && tuning.screenChannelEnabled !== false && anchorGuideTop !== null && (
         <div
           className="visual-anchor-guide-line"
-          style={{ top: `${tuning.anchorRatio * 100}%` }}
+          style={{ top: `${anchorGuideTop}px` }}
         >
           <span className="anchor-label mono">
             CENTER FOCAL ({tuning.anchorRatio.toFixed(2)} vh)
@@ -146,12 +172,12 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
       )}
 
       {/* Visual Falloff Band (Stationary soft highlight band) */}
-      {guides.showBand && tuning.screenChannelEnabled !== false && (
+      {guides.showBand && tuning.screenChannelEnabled !== false && bandGuideTop !== null && bandGuideHeight !== null && (
         <div
           className="visual-falloff-band"
           style={{
-            top: `${Math.max(0, (tuning.anchorRatio - tuning.bandRatio / 2) * 100)}%`,
-            height: `${tuning.bandRatio * 100}%`,
+            top: `${bandGuideTop}px`,
+            height: `${bandGuideHeight}px`,
           }}
         />
       )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowRight } from 'lucide-react';
 import type { Project, TelemetryData, TuningConfig, VisualGuidesConfig } from '../types';
 import { HoverSense, type HoverSenseState, type HoverHit } from '../../../src';
@@ -24,10 +24,41 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
 }) => {
   const [activeUnitId, setActiveUnitId] = useState<string | null>('unit-omega-01');
   const [clickNotice, setClickNotice] = useState<string | null>(null);
+  // Anchor guide position mapped from browser viewport into phone-frame-local coords
+  const [anchorGuideTop, setAnchorGuideTop] = useState<number | null>(null);
+  const [bandGuideTop, setBandGuideTop] = useState<number | null>(null);
+  const [bandGuideHeight, setBandGuideHeight] = useState<number | null>(null);
 
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const stageListRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<HoverSense | null>(null);
+
+  // Recompute visual anchor position on resize, scroll, or tuning change.
+  // The engine computes anchorY = window.innerHeight * anchorRatio in browser viewport space.
+  // The visual guide must show that exact Y-line mapped into the phone-frame wrapper's local space.
+  const recalcAnchorGuide = useCallback(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const anchorY = vh * tuning.anchorRatio;
+    // Convert from viewport-space to wrapper-local space
+    const localY = anchorY - wrapperRect.top;
+    setAnchorGuideTop(localY);
+
+    // Falloff band
+    const bandTopY = vh * Math.max(0, tuning.anchorRatio - tuning.bandRatio / 2);
+    const bandBottomY = vh * Math.min(1, tuning.anchorRatio + tuning.bandRatio / 2);
+    setBandGuideTop(bandTopY - wrapperRect.top);
+    setBandGuideHeight(bandBottomY - bandTopY);
+  }, [tuning.anchorRatio, tuning.bandRatio]);
+
+  useEffect(() => {
+    recalcAnchorGuide();
+    window.addEventListener('resize', recalcAnchorGuide, { passive: true });
+    return () => window.removeEventListener('resize', recalcAnchorGuide);
+  }, [recalcAnchorGuide]);
 
   // Mobile Touch Simulation on Desktop: Click and drag as swipe
   useTouchDragScroll<HTMLDivElement>({ enabled: !!touchSim }, scrollViewportRef);
@@ -137,12 +168,12 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
   };
 
   return (
-    <div className="mainframe-mobile-viewport-wrapper">
+    <div ref={wrapperRef} className="mainframe-mobile-viewport-wrapper">
       {/* Visual Gaze Anchor Line (Stationary over mobile viewport) */}
-      {guides.showAnchorLine && tuning.screenChannelEnabled !== false && (
+      {guides.showAnchorLine && tuning.screenChannelEnabled !== false && anchorGuideTop !== null && (
         <div
           className="visual-anchor-guide-line"
-          style={{ top: `${tuning.anchorRatio * 100}%` }}
+          style={{ top: `${anchorGuideTop}px` }}
         >
           <span className="anchor-label mono">
             GAZE ANCHOR ({tuning.anchorRatio.toFixed(2)} vh)
@@ -152,12 +183,12 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
       )}
 
       {/* Visual Falloff Band (Stationary soft highlight band) */}
-      {guides.showBand && tuning.screenChannelEnabled !== false && (
+      {guides.showBand && tuning.screenChannelEnabled !== false && bandGuideTop !== null && bandGuideHeight !== null && (
         <div
           className="visual-falloff-band"
           style={{
-            top: `${Math.max(0, (tuning.anchorRatio - tuning.bandRatio / 2) * 100)}%`,
-            height: `${tuning.bandRatio * 100}%`,
+            top: `${bandGuideTop}px`,
+            height: `${bandGuideHeight}px`,
           }}
         />
       )}

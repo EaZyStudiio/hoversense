@@ -1,5 +1,25 @@
 import type { Project, TeamMember } from './types';
 
+export const createSvgThumbnail = (code: string, title: string): string => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="700" height="700" viewBox="0 0 700 700">
+    <defs>
+      <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#0a0d14"/>
+        <stop offset="100%" stop-color="#141824"/>
+      </linearGradient>
+      <pattern id="gridPat" width="28" height="28" patternUnits="userSpaceOnUse">
+        <path d="M 28 0 L 0 0 0 28" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#bgGrad)"/>
+    <rect width="100%" height="100%" fill="url(#gridPat)"/>
+    <line x1="0" y1="350" x2="700" y2="350" stroke="#ff3300" stroke-width="2" stroke-dasharray="10 6"/>
+    <text x="50" y="310" fill="#00f0ff" font-family="monospace" font-size="32" font-weight="bold">${code}</text>
+    <text x="50" y="375" fill="#f1f5f9" font-family="sans-serif" font-size="26" font-weight="700">${title}</text>
+  </svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
+
 export const MOCK_PROJECTS: Project[] = [
   {
     id: 'unit-omega-01',
@@ -8,7 +28,7 @@ export const MOCK_PROJECTS: Project[] = [
     client: 'Turing Matrix',
     category: 'PERSONAL',
     tags: ['TENSOR', 'VISION', 'LOW_LATENCY'],
-    image: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?q=80&w=700&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=700&auto=format&fit=crop',
     summary: 'Autonomous spatial perception cluster and optical gaze inference model.',
     year: 2026,
   },

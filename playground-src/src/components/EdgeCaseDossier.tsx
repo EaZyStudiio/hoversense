@@ -1,4 +1,5 @@
 import React from 'react';
+import { X } from 'lucide-react';
 
 interface EdgeCaseDossierProps {
   isOpen: boolean;
@@ -23,7 +24,8 @@ export const EdgeCaseDossier: React.FC<EdgeCaseDossierProps> = ({ isOpen, onClos
             <h2 className="dossier-title">DX Edge-Case Analysis</h2>
           </div>
           <button type="button" className="btn-close-dossier" onClick={onClose}>
-            ✕ Close
+            <X size={15} />
+            <span>Close</span>
           </button>
         </div>
 

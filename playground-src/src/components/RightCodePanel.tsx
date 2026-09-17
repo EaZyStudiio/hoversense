@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { undo, redo } from '@codemirror/commands';
+import type { EditorView } from '@codemirror/view';
+import { Undo2, Redo2, Copy, Check, Zap, Code2, Palette } from 'lucide-react';
 import { CODE_SNIPPETS } from '../data';
 import type { TuningConfig } from '../types';
 
@@ -21,6 +24,7 @@ export const RightCodePanel: React.FC<RightCodePanelProps> = ({
   const [codeMap, setCodeMap] = useState<Record<string, string>>(CODE_SNIPPETS);
   const [copied, setCopied] = useState<boolean>(false);
   const [appliedFlash, setAppliedFlash] = useState<boolean>(false);
+  const editorViewRef = useRef<EditorView | null>(null);
 
   const currentCode = codeMap[activeFile] || '';
   const isEditable = activeFile.includes('.dx.');
@@ -44,6 +48,18 @@ export const RightCodePanel: React.FC<RightCodePanelProps> = ({
       if (Object.keys(updates).length > 0) {
         onApplyTuning(updates);
       }
+    }
+  };
+
+  const handleUndo = () => {
+    if (editorViewRef.current) {
+      undo(editorViewRef.current);
+    }
+  };
+
+  const handleRedo = () => {
+    if (editorViewRef.current) {
+      redo(editorViewRef.current);
     }
   };
 
@@ -87,7 +103,9 @@ export const RightCodePanel: React.FC<RightCodePanelProps> = ({
               className={`codemirror-tab ${isActive ? 'active' : ''}`}
               onClick={() => onSelectFile(file)}
             >
-              <span className="tab-icon">{file.endsWith('.css') ? '🎨' : '⚛️'}</span>
+              <span className="tab-icon">
+                {file.endsWith('.css') ? <Palette size={12} /> : <Code2 size={12} />}
+              </span>
               <span className="tab-name mono">{file}</span>
               {isOriginal && <span className="tab-tag tag-legacy mono">ORIGINAL</span>}
               {isDX && <span className="tab-tag tag-dx mono">DX</span>}
@@ -105,13 +123,36 @@ export const RightCodePanel: React.FC<RightCodePanelProps> = ({
         </div>
 
         <div className="actions-cluster">
+          {/* Undo / Redo buttons for CodeMirror */}
+          {isEditable && (
+            <>
+              <button
+                type="button"
+                className="btn-editor-action mono"
+                onClick={handleUndo}
+                title="Undo code edit (Ctrl+Z)"
+              >
+                <Undo2 size={12} />
+              </button>
+              <button
+                type="button"
+                className="btn-editor-action mono"
+                onClick={handleRedo}
+                title="Redo code edit (Ctrl+Y)"
+              >
+                <Redo2 size={12} />
+              </button>
+            </>
+          )}
+
           {isEditable && (
             <button
               type="button"
               className={`btn-apply-run mono ${appliedFlash ? 'flash-success' : ''}`}
               onClick={handleApplyCode}
             >
-              {appliedFlash ? '✓ Live Stage Synced' : '⚡ Apply to Stage'}
+              {appliedFlash ? <Check size={11} /> : <Zap size={11} />}
+              <span>{appliedFlash ? 'Live Stage Synced' : 'Apply to Stage'}</span>
             </button>
           )}
 
@@ -121,7 +162,8 @@ export const RightCodePanel: React.FC<RightCodePanelProps> = ({
             onClick={handleCopy}
             title="Copy file contents"
           >
-            {copied ? '✓ Copied' : 'Copy'}
+            {copied ? <Check size={11} /> : <Copy size={11} />}
+            <span>{copied ? 'Copied' : 'Copy'}</span>
           </button>
         </div>
       </div>
@@ -134,6 +176,9 @@ export const RightCodePanel: React.FC<RightCodePanelProps> = ({
           theme={oneDark}
           extensions={[javascript({ jsx: true, typescript: true })]}
           onChange={handleCodeChange}
+          onCreateEditor={(view) => {
+            editorViewRef.current = view;
+          }}
           editable={isEditable}
           basicSetup={{
             lineNumbers: true,

@@ -47,12 +47,22 @@ export default function App() {
   const [dossierOpen, setDossierOpen] = useState<boolean>(false);
   const [deviceFrame, setDeviceFrame] = useState<boolean>(true);
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
+  const [touchSim, setTouchSim] = useState<boolean>(true);
+  const [showSimToast, setShowSimToast] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('hs_sim_toast_dismissed') !== '1';
+    } catch {
+      return true;
+    }
+  });
 
   // Desktop sidebar collapse toggles
   const [showLeftSidebar, setShowLeftSidebar] = useState<boolean>(true);
   const [showRightPanel, setShowRightPanel] = useState<boolean>(true);
 
   const [tuning, setTuning] = useState<TuningConfig>(DEFAULT_MAINFRAME_TUNING);
+  const [tuningHistory, setTuningHistory] = useState<TuningConfig[]>([DEFAULT_MAINFRAME_TUNING]);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
 
   const [guides, setGuides] = useState<VisualGuidesConfig>({
     showAnchorLine: true,
@@ -89,14 +99,43 @@ export default function App() {
     if (mode === 'mainframe') {
       setActiveFile('Mainframe.dx.tsx');
       setTuning(DEFAULT_MAINFRAME_TUNING);
+      setTuningHistory([DEFAULT_MAINFRAME_TUNING]);
+      setHistoryIndex(0);
     } else {
       setActiveFile('TeamGrid.dx.tsx');
       setTuning(DEFAULT_COLLECTIVE_TUNING);
+      setTuningHistory([DEFAULT_COLLECTIVE_TUNING]);
+      setHistoryIndex(0);
     }
   };
 
   const handleApplyTuning = (newTuning: Partial<TuningConfig>) => {
-    setTuning((prev) => ({ ...prev, ...newTuning }));
+    setTuning((prev) => {
+      const next = { ...prev, ...newTuning };
+      setTuningHistory((h) => {
+        const sliced = h.slice(0, historyIndex + 1);
+        const updated = [...sliced, next];
+        return updated.slice(-50);
+      });
+      setHistoryIndex((prevIdx) => Math.min(prevIdx + 1, 49));
+      return next;
+    });
+  };
+
+  const handleUndoTuning = () => {
+    if (historyIndex > 0) {
+      const nextIdx = historyIndex - 1;
+      setHistoryIndex(nextIdx);
+      setTuning(tuningHistory[nextIdx]);
+    }
+  };
+
+  const handleRedoTuning = () => {
+    if (historyIndex < tuningHistory.length - 1) {
+      const nextIdx = historyIndex + 1;
+      setHistoryIndex(nextIdx);
+      setTuning(tuningHistory[nextIdx]);
+    }
   };
 
   const handleToggleGuide = (guideKey: keyof VisualGuidesConfig) => {
@@ -119,10 +158,21 @@ export default function App() {
   };
 
   const handleResetDefaults = () => {
-    if (showcase === 'mainframe') {
-      setTuning(DEFAULT_MAINFRAME_TUNING);
-    } else {
-      setTuning(DEFAULT_COLLECTIVE_TUNING);
+    const defaultTuning = showcase === 'mainframe' ? DEFAULT_MAINFRAME_TUNING : DEFAULT_COLLECTIVE_TUNING;
+    setTuning(defaultTuning);
+    setTuningHistory((h) => {
+      const sliced = h.slice(0, historyIndex + 1);
+      return [...sliced, defaultTuning].slice(-50);
+    });
+    setHistoryIndex((idx) => Math.min(idx + 1, 49));
+  };
+
+  const handleDismissSimToast = () => {
+    setShowSimToast(false);
+    try {
+      sessionStorage.setItem('hs_sim_toast_dismissed', '1');
+    } catch {
+      // Safe fallback
     }
   };
 
@@ -145,6 +195,8 @@ export default function App() {
         mobileTab={mobileTab}
         onSelectMobileTab={setMobileTab}
         isMobileDevice={isMobileDevice}
+        touchSim={touchSim}
+        onToggleTouchSim={() => setTouchSim((t) => !t)}
       />
 
       {/* Master 3-Column Workspace */}
@@ -159,12 +211,47 @@ export default function App() {
             telemetry={telemetry}
             onCenterScroll={handleCenterScroll}
             onResetDefaults={handleResetDefaults}
+            canUndo={historyIndex > 0}
+            canRedo={historyIndex < tuningHistory.length - 1}
+            onUndo={handleUndoTuning}
+            onRedo={handleRedoTuning}
           />
         )}
 
         {/* CENTER COLUMN: Mobile Preview Canvas */}
         {(!isMobileDevice || mobileTab === 'preview') && (
           <section className="center-canvas-pane" aria-label="Interactive Preview Canvas">
+            {/* Session Touch Emulation Toast */}
+            {touchSim && showSimToast && !isMobileDevice && (
+              <div className="touch-sim-notification-toast mono">
+                <div className="toast-text-group">
+                  <span className="toast-badge">TOUCH EMULATION</span>
+                  <span className="toast-desc">
+                    Click &amp; drag mouse to swipe/scroll. Hovers trigger via gaze anchor horizon or touch-hold.
+                  </span>
+                </div>
+                <div className="toast-btn-group">
+                  <button
+                    type="button"
+                    className="btn-toast-confirm"
+                    onClick={handleDismissSimToast}
+                  >
+                    Got it
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-toast-optout"
+                    onClick={() => {
+                      setTouchSim(false);
+                      handleDismissSimToast();
+                    }}
+                  >
+                    Disable
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className={deviceFrame && !isMobileDevice ? 'simulated-phone-frame' : 'full-width-canvas-wrapper'}>
               {deviceFrame && !isMobileDevice && <div className="phone-speaker-island" />}
 
@@ -175,6 +262,7 @@ export default function App() {
                   guides={guides}
                   onTelemetryUpdate={setTelemetry}
                   onCenterRequest={(fn) => { centerScrollTriggerRef.current = fn; }}
+                  touchSim={touchSim}
                 />
               ) : (
                 <TeamGridStage
@@ -183,6 +271,7 @@ export default function App() {
                   guides={guides}
                   onTelemetryUpdate={setTelemetry}
                   onCenterRequest={(fn) => { centerScrollTriggerRef.current = fn; }}
+                  touchSim={touchSim}
                 />
               )}
             </div>

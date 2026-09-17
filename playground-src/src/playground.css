@@ -218,6 +218,37 @@ html, body {
   color: var(--text-muted);
 }
 
+.sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-history-step {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.btn-history-step:hover:not(:disabled) {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.btn-history-step:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .btn-center-scroll {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
@@ -226,6 +257,9 @@ html, body {
   padding: 3px 8px;
   border-radius: 3px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   transition: all 120ms ease;
 }
 
@@ -1072,12 +1106,13 @@ html, body {
    ========================================================================== */
 
 .right-code-panel {
-  width: 440px;
+  flex: 1.35;
+  min-width: 480px;
+  max-width: 860px;
   background: #10121a;
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
   overflow: hidden;
 }
 
@@ -1158,7 +1193,27 @@ html, body {
 .actions-cluster {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.btn-editor-action {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.btn-editor-action:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .btn-apply-run {
@@ -1167,9 +1222,12 @@ html, body {
   font-size: 9.5px;
   font-weight: 800;
   border: none;
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: 3px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   transition: all 120ms ease;
 }
 
@@ -1187,9 +1245,13 @@ html, body {
   border: 1px solid var(--border);
   color: var(--text-muted);
   font-size: 9.5px;
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: 3px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 120ms ease;
 }
 
 .btn-copy-code:hover {
@@ -1526,3 +1588,123 @@ html, body {
   color: var(--accent-amber);
   font-weight: bold;
 }
+
+/* ==========================================================================
+   MOBILE TOUCH SIMULATION ON DESKTOP: Click-Drag as Swipe & Circle Cursor
+   ========================================================================== */
+
+.touch-sim-active {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='rgba(0,240,255,0.18)' stroke='%2300f0ff' stroke-width='1.5'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%2300f0ff'/%3E%3C/svg%3E") 12 12, grab !important;
+}
+
+.touch-sim-active * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: inherit !important;
+}
+
+.touch-sim-active.touch-sim-dragging,
+.touch-sim-active.touch-sim-dragging * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='rgba(255,51,0,0.35)' stroke='%23ff3300' stroke-width='2'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%23ff3300'/%3E%3C/svg%3E") 12 12, grabbing !important;
+}
+
+/* Purposefully ignore real mouse hover in the air when touch emulation is active */
+.touch-sim-active .tactical-unit-row:not(.unit-focused) {
+  border-left-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.touch-sim-active .tactical-unit-row:not(.unit-focused) .floating-portrait-peek {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(8px) scale(0.96) !important;
+}
+
+/* Session Touch Emulation Toast Banner */
+.touch-sim-notification-toast {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  background: rgba(11, 13, 20, 0.94);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 240, 255, 0.1);
+  padding: 8px 14px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 90%;
+  animation: fadeInDownToast 240ms ease-out;
+}
+
+@keyframes fadeInDownToast {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.toast-text-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+}
+
+.toast-badge {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: var(--accent-cyan);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.toast-desc {
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.toast-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-toast-confirm {
+  background: var(--accent-cyan);
+  border: none;
+  color: #000;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.btn-toast-confirm:hover {
+  background: #fff;
+}
+
+.btn-toast-optout {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-muted);
+  font-size: 9.5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.btn-toast-optout:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+

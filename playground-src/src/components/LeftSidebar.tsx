@@ -1,4 +1,5 @@
 import React from 'react';
+import { Crosshair, RotateCcw, Undo2, Redo2 } from 'lucide-react';
 import type { TuningConfig, TelemetryData, VisualGuidesConfig } from '../types';
 
 interface LeftSidebarProps {
@@ -9,6 +10,10 @@ interface LeftSidebarProps {
   telemetry: TelemetryData;
   onCenterScroll: () => void;
   onResetDefaults: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -19,20 +24,46 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   telemetry,
   onCenterScroll,
   onResetDefaults,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
 }) => {
   return (
     <aside className="left-sidebar-pane" aria-label="Biomechanical Tuning Controls">
       {/* Sidebar Header */}
       <div className="sidebar-header-bar">
         <span className="sidebar-title-mono mono">BIOMECHANICAL TUNING</span>
-        <button
-          type="button"
-          className="btn-center-scroll mono"
-          onClick={onCenterScroll}
-          title="Scroll stage to center"
-        >
-          ⌖ Center Scroll
-        </button>
+        <div className="sidebar-header-actions">
+          {/* Undo / Redo Tuning Stack */}
+          <button
+            type="button"
+            className="btn-history-step mono"
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="Undo Tuning Change (Ctrl+Z)"
+          >
+            <Undo2 size={12} />
+          </button>
+          <button
+            type="button"
+            className="btn-history-step mono"
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="Redo Tuning Change (Ctrl+Y)"
+          >
+            <Redo2 size={12} />
+          </button>
+          <button
+            type="button"
+            className="btn-center-scroll mono"
+            onClick={onCenterScroll}
+            title="Scroll stage to center"
+          >
+            <Crosshair size={11} />
+            <span>Center</span>
+          </button>
+        </div>
       </div>
 
       <div className="sidebar-scrollable-content">
@@ -250,7 +281,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             className="btn-reset-defaults mono"
             onClick={onResetDefaults}
           >
-            ↺ Reset Biomechanical Defaults
+            <RotateCcw size={12} />
+            <span>Reset Biomechanical Defaults</span>
           </button>
         </div>
       </div>

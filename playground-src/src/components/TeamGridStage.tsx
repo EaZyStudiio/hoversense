@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import type { TeamMember, TelemetryData, TuningConfig, VisualGuidesConfig } from '../types';
 import { HoverSense, type HoverSenseState, type HoverHit } from '../../../src';
+import { createSvgThumbnail } from '../data';
+import { useTouchDragScroll } from '../hooks/useTouchDragScroll';
 
 interface TeamGridStageProps {
   members: TeamMember[];
@@ -8,6 +10,7 @@ interface TeamGridStageProps {
   guides: VisualGuidesConfig;
   onTelemetryUpdate: (data: TelemetryData) => void;
   onCenterRequest?: (trigger: () => void) => void;
+  touchSim?: boolean;
 }
 
 export const TeamGridStage: React.FC<TeamGridStageProps> = ({
@@ -16,10 +19,14 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
   guides,
   onTelemetryUpdate,
   onCenterRequest,
+  touchSim = true,
 }) => {
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const stageContentRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<HoverSense | null>(null);
+
+  // Mobile Touch Simulation on Desktop: Click and drag as swipe
+  useTouchDragScroll<HTMLDivElement>({ enabled: !!touchSim }, scrollViewportRef);
 
   const scrollToCenter = () => {
     const viewport = scrollViewportRef.current;
@@ -183,6 +190,10 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
                     alt={member.name}
                     loading="lazy"
                     className="team-card-image"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = createSvgThumbnail('0' + member.id, member.name);
+                    }}
                   />
                   <div className="team-card-vignette" />
 

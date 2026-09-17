@@ -1,4 +1,5 @@
 import React from 'react';
+import { Sliders, Smartphone, Code2 } from 'lucide-react';
 import type { MobileTab } from '../types';
 
 interface MobileBottomNavProps {
@@ -17,7 +18,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         className={`mobile-nav-btn ${activeTab === 'tune' ? 'active' : ''}`}
         onClick={() => onSelectTab('tune')}
       >
-        <span className="nav-btn-icon">🎛️</span>
+        <span className="nav-btn-icon">
+          <Sliders size={18} />
+        </span>
         <span className="nav-btn-text mono">Tune</span>
       </button>
 
@@ -26,7 +29,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         className={`mobile-nav-btn ${activeTab === 'preview' ? 'active' : ''}`}
         onClick={() => onSelectTab('preview')}
       >
-        <span className="nav-btn-icon">📱</span>
+        <span className="nav-btn-icon">
+          <Smartphone size={18} />
+        </span>
         <span className="nav-btn-text mono">Preview</span>
       </button>
 
@@ -35,7 +40,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         className={`mobile-nav-btn ${activeTab === 'code' ? 'active' : ''}`}
         onClick={() => onSelectTab('code')}
       >
-        <span className="nav-btn-icon">💻</span>
+        <span className="nav-btn-icon">
+          <Code2 size={18} />
+        </span>
         <span className="nav-btn-text mono">Code</span>
       </button>
     </nav>

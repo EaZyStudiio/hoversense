@@ -1,4 +1,16 @@
 import React from 'react';
+import {
+  Eye,
+  EyeOff,
+  Crosshair,
+  Smartphone,
+  Monitor,
+  Sliders,
+  Code2,
+  FileText,
+  ArrowLeft,
+  Hand,
+} from 'lucide-react';
 import type { ShowcaseMode, VisualGuidesConfig, MobileTab } from '../types';
 
 interface TopNavProps {
@@ -17,6 +29,8 @@ interface TopNavProps {
   mobileTab: MobileTab;
   onSelectMobileTab: (tab: MobileTab) => void;
   isMobileDevice: boolean;
+  touchSim: boolean;
+  onToggleTouchSim: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -35,6 +49,8 @@ export const TopNav: React.FC<TopNavProps> = ({
   mobileTab,
   onSelectMobileTab,
   isMobileDevice,
+  touchSim,
+  onToggleTouchSim,
 }) => {
   const allGuidesActive = guides.showAnchorLine && guides.showBand;
 
@@ -75,7 +91,8 @@ export const TopNav: React.FC<TopNavProps> = ({
           onClick={onToggleAllGuides}
           title={allGuidesActive ? 'Hide Visual Anchor Guides (Normal View)' : 'Show Visual Anchor Guides'}
         >
-          <span>{allGuidesActive ? '👁️ Guides: ON' : '👁️‍🗨️ Normal View'}</span>
+          {allGuidesActive ? <Eye size={13} /> : <EyeOff size={13} />}
+          <span>{allGuidesActive ? 'Guides: ON' : 'Normal View'}</span>
         </button>
 
         {/* Center Canvas Button */}
@@ -85,19 +102,32 @@ export const TopNav: React.FC<TopNavProps> = ({
           onClick={onCenterScroll}
           title="Center Preview Scroll"
         >
-          <span>⌖ Center</span>
+          <Crosshair size={13} />
+          <span>Center</span>
         </button>
 
         {/* Desktop Device & Panel Toggles */}
         {!isMobileDevice && (
           <>
+            {/* Touch Simulation Toggle */}
+            <button
+              type="button"
+              className={`btn-tool-pill mono ${touchSim ? 'active-tool' : ''}`}
+              onClick={onToggleTouchSim}
+              title={touchSim ? 'Touch Simulation Active: Click & drag to swipe' : 'Touch Simulation Disabled'}
+            >
+              <Hand size={13} />
+              <span>Touch Sim: {touchSim ? 'ON' : 'OFF'}</span>
+            </button>
+
             <button
               type="button"
               className={`btn-tool-pill mono ${deviceFrame ? 'active-tool' : ''}`}
               onClick={onToggleDeviceFrame}
               title={deviceFrame ? 'Switch to Full Width View' : 'Simulate Mobile Device Frame'}
             >
-              <span>{deviceFrame ? '📱 Mobile Frame' : '🖥️ Full Width'}</span>
+              {deviceFrame ? <Smartphone size={13} /> : <Monitor size={13} />}
+              <span>{deviceFrame ? 'Mobile Frame' : 'Full Width'}</span>
             </button>
 
             <button
@@ -106,7 +136,8 @@ export const TopNav: React.FC<TopNavProps> = ({
               onClick={onToggleLeftSidebar}
               title="Toggle Tuning Left Sidebar"
             >
-              <span>🎛️ Tune</span>
+              <Sliders size={13} />
+              <span>Tune</span>
             </button>
 
             <button
@@ -115,7 +146,8 @@ export const TopNav: React.FC<TopNavProps> = ({
               onClick={onToggleRightPanel}
               title="Toggle Code Right Panel"
             >
-              <span>💻 Code</span>
+              <Code2 size={13} />
+              <span>Code</span>
             </button>
           </>
         )}
@@ -130,7 +162,8 @@ export const TopNav: React.FC<TopNavProps> = ({
             className={`btn-tool-pill mono ${mobileTab === 'code' ? 'active-tool' : ''}`}
             onClick={() => onSelectMobileTab(mobileTab === 'code' ? 'preview' : 'code')}
           >
-            <span>💻 Code View</span>
+            <Code2 size={13} />
+            <span>Code View</span>
           </button>
         )}
 
@@ -140,12 +173,14 @@ export const TopNav: React.FC<TopNavProps> = ({
           className="btn-tool-pill btn-dossier-pill mono"
           onClick={onOpenDossier}
         >
-          <span>📑 Dossier</span>
+          <FileText size={13} />
+          <span>Dossier</span>
         </button>
 
         {/* Back to Physics Lab Link */}
         <a href="../index.html" className="btn-tool-link mono">
-          <span>← Physics Lab</span>
+          <ArrowLeft size={13} />
+          <span>Physics Lab</span>
         </a>
       </div>
     </header>

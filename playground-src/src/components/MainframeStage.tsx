@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ArrowRight } from 'lucide-react';
 import type { Project, TelemetryData, TuningConfig, VisualGuidesConfig } from '../types';
 import { HoverSense, type HoverSenseState, type HoverHit } from '../../../src';
+import { createSvgThumbnail } from '../data';
+import { useTouchDragScroll } from '../hooks/useTouchDragScroll';
 
 interface MainframeStageProps {
   projects: Project[];
@@ -8,6 +11,7 @@ interface MainframeStageProps {
   guides: VisualGuidesConfig;
   onTelemetryUpdate: (data: TelemetryData) => void;
   onCenterRequest?: (trigger: () => void) => void;
+  touchSim?: boolean;
 }
 
 export const MainframeStage: React.FC<MainframeStageProps> = ({
@@ -16,6 +20,7 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
   guides,
   onTelemetryUpdate,
   onCenterRequest,
+  touchSim = true,
 }) => {
   const [activeUnitId, setActiveUnitId] = useState<string | null>('unit-omega-01');
   const [clickNotice, setClickNotice] = useState<string | null>(null);
@@ -23,6 +28,9 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const stageListRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<HoverSense | null>(null);
+
+  // Mobile Touch Simulation on Desktop: Click and drag as swipe
+  useTouchDragScroll<HTMLDivElement>({ enabled: !!touchSim }, scrollViewportRef);
 
   // Center scroll helper
   const scrollToCenter = () => {
@@ -226,6 +234,10 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
                         alt={project.title}
                         loading="lazy"
                         className="peek-thumbnail"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = createSvgThumbnail(project.code, project.title);
+                        }}
                       />
                       <span className="peek-prev-pill mono">PREV</span>
                     </div>
@@ -238,7 +250,9 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
                       <span className="peek-live-status">
                         <span className="pulse-dot-indicator" /> LIVE
                       </span>
-                      <span className="peek-access-btn">ACCESS →</span>
+                      <span className="peek-access-btn">
+                        ACCESS <ArrowRight size={11} style={{ verticalAlign: 'middle', marginLeft: 3 }} />
+                      </span>
                     </div>
                   </div>
                 </article>

@@ -149,8 +149,11 @@ export const EdgeCaseDossier: React.FC<EdgeCaseDossierProps> = ({ isOpen, onClos
               </p>
               <p className="edge-text">
                 <strong>Resolution:</strong> The touch channel enforces a 220ms scrollLockGraceMs window. Rapid
-                vertical flicks are classified as native scrolling, suppressing touch hover. Popups should only
-                bind to the engaged phase or when strength &gt;= 0.85.
+                vertical flicks are classified as native scrolling, suppressing touch hover. Additionally, the
+                dwellThresholdMs setting (80ms default) requires continuous gaze presence before discrete triggers fire.
+              </p>
+              <p className="edge-verdict">
+                <strong>Is it worth it?</strong> Yes. Eliminates strobing at the mathematical source without adding application-side timer boilerplate.
               </p>
             </div>
           </div>
@@ -167,6 +170,7 @@ export const EdgeCaseDossier: React.FC<EdgeCaseDossierProps> = ({ isOpen, onClos
                   <li>Automatic iOS touch hygiene (eliminates callouts and selection delay).</li>
                   <li>Turnkey 1-line initialization replaces 140 lines of boilerplate.</li>
                   <li>Native MutationObserver auto-syncs dynamic tab switches.</li>
+                  <li>Discrete data-hs-engaged attribute bridges CSS variables to conditional DOM mounting.</li>
                 </ul>
               </div>
 
@@ -174,7 +178,7 @@ export const EdgeCaseDossier: React.FC<EdgeCaseDossierProps> = ({ isOpen, onClos
                 <h4>Downsides &amp; Trade-offs</h4>
                 <ul>
                   <li>Developers must adopt CSS custom properties rather than purely reactive state.</li>
-                  <li>GSAP animations must target child elements to prevent transform collisions.</li>
+                  <li>Independent scale and translate properties decouple GSAP, but monolithic transforms require scoping.</li>
                   <li>Server-side rendering requires hydration before spatial tracking mounts.</li>
                 </ul>
               </div>

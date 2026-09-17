@@ -55,20 +55,22 @@ export function useTouchDragScroll<T extends HTMLElement>(
     const handlePointerMove = (e: PointerEvent) => {
       if (!isDraggingRef.current) return;
 
-      const deltaY = e.clientY - startPosRef.current.y;
+      const rawDeltaY = e.clientY - startPosRef.current.y;
       const deltaX = e.clientX - startPosRef.current.x;
 
-      if (!hasMovedRef.current && (Math.abs(deltaY) > 4 || Math.abs(deltaX) > 4)) {
+      if (!hasMovedRef.current && (Math.abs(rawDeltaY) > 3 || Math.abs(deltaX) > 3)) {
         hasMovedRef.current = true;
       }
 
       if (hasMovedRef.current) {
-        container.scrollTop = startPosRef.current.scrollTop - deltaY;
+        // Fast, natural mobile touch drag multiplier (1.75x)
+        const amplifiedDeltaY = rawDeltaY * 1.75;
+        container.scrollTop = startPosRef.current.scrollTop - amplifiedDeltaY;
 
         const now = performance.now();
         const history = velocityHistoryRef.current;
         history.push({ y: e.clientY, time: now });
-        if (history.length > 5) history.shift();
+        if (history.length > 8) history.shift();
       }
     };
 
@@ -87,18 +89,23 @@ export function useTouchDragScroll<T extends HTMLElement>(
 
       if (hasMovedRef.current) {
         const history = velocityHistoryRef.current;
-        if (history.length >= 2) {
-          const first = history[0];
-          const last = history[history.length - 1];
-          const dt = last.time - first.time;
-          if (dt > 10 && dt < 200) {
-            const vy = (last.y - first.y) / dt;
-            if (Math.abs(vy) > 0.15) {
-              let currentVelocity = vy * 14;
+        const now = performance.now();
+        // Sample recent samples in the last 100ms for accurate flick velocity
+        const recent = history.filter((pt) => now - pt.time < 120);
+        const sampleStart = recent[0] || history[0];
+        const sampleEnd = history[history.length - 1];
+
+        if (sampleStart && sampleEnd) {
+          const dt = sampleEnd.time - sampleStart.time;
+          if (dt > 8) {
+            const vy = (sampleEnd.y - sampleStart.y) / dt; // px/ms
+            if (Math.abs(vy) > 0.10) {
+              // High-momentum iOS-style flick physics: 75x impulse, 0.955 soft decay
+              let currentVelocity = vy * 75;
               const momentumStep = () => {
-                currentVelocity *= 0.91;
+                currentVelocity *= 0.955;
                 container.scrollTop -= currentVelocity;
-                if (Math.abs(currentVelocity) > 0.4) {
+                if (Math.abs(currentVelocity) > 0.35) {
                   inertiaRafRef.current = requestAnimationFrame(momentumStep);
                 } else {
                   inertiaRafRef.current = null;

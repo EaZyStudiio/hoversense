@@ -192,8 +192,6 @@ export default function App() {
         showRightPanel={showRightPanel}
         onToggleRightPanel={() => setShowRightPanel((s) => !s)}
         onOpenDossier={() => setDossierOpen(true)}
-        mobileTab={mobileTab}
-        onSelectMobileTab={setMobileTab}
         isMobileDevice={isMobileDevice}
         touchSim={touchSim}
         onToggleTouchSim={() => setTouchSim((t) => !t)}

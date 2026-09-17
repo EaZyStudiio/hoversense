@@ -586,7 +586,7 @@ html, body {
   position: relative;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 /* Visual Guides Overlays */
@@ -1106,9 +1106,8 @@ html, body {
    ========================================================================== */
 
 .right-code-panel {
-  flex: 1.35;
+  flex: 1.4;
   min-width: 480px;
-  max-width: 860px;
   background: #10121a;
   border-left: 1px solid var(--border);
   display: flex;
@@ -1364,6 +1363,72 @@ html, body {
 
   .phone-speaker-island {
     display: none !important;
+  }
+
+  /* Improved Mobile Top Bar */
+  .mobile-top-header {
+    height: 46px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #07080d;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mobile-top-header .brand-title-text {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .mobile-top-header .brand-tag-dx {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+
+  .mobile-top-header .mobile-showcase-switcher {
+    margin-left: 0;
+    display: flex;
+    padding: 2px;
+  }
+
+  .mobile-top-header .mobile-showcase-switcher .seg-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .mobile-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .btn-icon-square {
+    background: #0c0e14;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 120ms ease;
+  }
+
+  .btn-icon-square:hover, .btn-icon-square:active {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .btn-icon-square.active-tool {
+    background: rgba(0, 240, 255, 0.12);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
   }
 }
 

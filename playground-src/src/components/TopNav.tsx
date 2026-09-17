@@ -11,7 +11,7 @@ import {
   ArrowLeft,
   Hand,
 } from 'lucide-react';
-import type { ShowcaseMode, VisualGuidesConfig, MobileTab } from '../types';
+import type { ShowcaseMode, VisualGuidesConfig } from '../types';
 
 interface TopNavProps {
   showcase: ShowcaseMode;
@@ -26,8 +26,6 @@ interface TopNavProps {
   showRightPanel: boolean;
   onToggleRightPanel: () => void;
   onOpenDossier: () => void;
-  mobileTab: MobileTab;
-  onSelectMobileTab: (tab: MobileTab) => void;
   isMobileDevice: boolean;
   touchSim: boolean;
   onToggleTouchSim: () => void;
@@ -46,14 +44,87 @@ export const TopNav: React.FC<TopNavProps> = ({
   showRightPanel,
   onToggleRightPanel,
   onOpenDossier,
-  mobileTab,
-  onSelectMobileTab,
   isMobileDevice,
   touchSim,
   onToggleTouchSim,
 }) => {
   const allGuidesActive = guides.showAnchorLine && guides.showBand;
 
+  // DEDICATED MOBILE TOP BAR (Screen < 820px)
+  if (isMobileDevice) {
+    return (
+      <header className="playground-top-header mobile-top-header" aria-label="Mobile Navigation">
+        {/* Left: Brand Identity */}
+        <a href="./" className="brand-link">
+          <span className="brand-dot-pulse" />
+          <span className="brand-title-text mono">HOVERSENSE</span>
+          <span className="brand-tag-dx mono">DX</span>
+        </a>
+
+        {/* Center: Compact Showcase Switcher */}
+        <div className="showcase-segmented-control mobile-showcase-switcher" role="tablist">
+          <button
+            type="button"
+            className={`seg-btn mono ${showcase === 'mainframe' ? 'active' : ''}`}
+            onClick={() => onSelectShowcase('mainframe')}
+          >
+            Mainframe
+          </button>
+          <button
+            type="button"
+            className={`seg-btn mono ${showcase === 'collective' ? 'active' : ''}`}
+            onClick={() => onSelectShowcase('collective')}
+          >
+            Collective
+          </button>
+        </div>
+
+        {/* Right: Compact Icon Actions */}
+        <div className="mobile-header-actions">
+          {/* Guides Toggle */}
+          <button
+            type="button"
+            className={`btn-icon-square mono ${allGuidesActive ? 'active-tool' : ''}`}
+            onClick={onToggleAllGuides}
+            title={allGuidesActive ? 'Hide Visual Guides' : 'Show Visual Guides'}
+          >
+            {allGuidesActive ? <Eye size={14} /> : <EyeOff size={14} />}
+          </button>
+
+          {/* Center Stage Scroll */}
+          <button
+            type="button"
+            className="btn-icon-square mono"
+            onClick={onCenterScroll}
+            title="Center Preview Scroll"
+          >
+            <Crosshair size={14} />
+          </button>
+
+          {/* Technical Dossier Drawer */}
+          <button
+            type="button"
+            className="btn-icon-square mono"
+            onClick={onOpenDossier}
+            title="Technical Dossier"
+          >
+            <FileText size={14} />
+          </button>
+
+          {/* Return to Physics Lab */}
+          <a
+            href="../index.html"
+            className="btn-icon-square mono"
+            title="Exit to Physics Lab"
+          >
+            <ArrowLeft size={14} />
+          </a>
+        </div>
+      </header>
+    );
+  }
+
+  // DESKTOP TOP BAR (Screen >= 820px)
   return (
     <header className="playground-top-header" aria-label="Main Navigation">
       <div className="header-brand-cluster">
@@ -155,18 +226,6 @@ export const TopNav: React.FC<TopNavProps> = ({
 
       {/* Right Actions Cluster */}
       <div className="header-actions-cluster">
-        {/* On mobile: Code toggle button */}
-        {isMobileDevice && (
-          <button
-            type="button"
-            className={`btn-tool-pill mono ${mobileTab === 'code' ? 'active-tool' : ''}`}
-            onClick={() => onSelectMobileTab(mobileTab === 'code' ? 'preview' : 'code')}
-          >
-            <Code2 size={13} />
-            <span>Code View</span>
-          </button>
-        )}
-
         {/* Technical Dossier Modal Trigger */}
         <button
           type="button"

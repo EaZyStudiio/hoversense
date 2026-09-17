@@ -4,9 +4,9 @@ Turnkey pointerless interaction engine for modern touch interfaces.
 
 Touchscreens do not have a continuous hover cursor. HoverSense bridges this physical gap by turning vertical reading gaze and deliberate touch intent into smooth, hardware-accelerated spatial hover.
 
-Think of this like React Native: you get a turnkey, high-level developer experience that mounts in three lines and requires zero virtual DOM re-renders, while retaining the freedom to drop down to bare-metal math whenever you need custom pipelines.
+Mount in three lines with zero framework re-renders, or use the low-level engine API directly for custom spatial pipelines.
 
-[⚡ Live Playground](https://eazystudiio.github.io/hoversense/playground/) | [📱 Mobile Demo](https://eazystudiio.github.io/hoversense/) | [Architecture Dossier](docs/DX_ANALYSIS.md) | [Bare-Metal Math Branch](https://github.com/EaZyStudiio/hoversense/tree/lean)
+[⚡ Live Playground](https://eazystudiio.github.io/hoversense/playground/) | [📱 Mobile Demo](https://eazystudiio.github.io/hoversense/) | [Architecture Dossier](docs/DX_ANALYSIS.md) | [Core Math Branch (Lean)](https://github.com/EaZyStudiio/hoversense/tree/lean)
 
 ---
 
@@ -134,14 +134,14 @@ Visit the live production deployment: [https://eazystudiio.github.io/hoversense/
 
 ---
 
-## Need Bare-Metal Math Only?
+## Core Math Only (Lean Branch)
 
-If you are building custom WebGL shaders, Three.js scenes, game viewports, or native mobile apps (Kotlin / Swift / Rust), you do not need DOM helpers or website assets.
+If you are building custom WebGL shaders, Three.js scenes, game viewports, or non-web runtimes (Kotlin, Swift, Rust), you do not need DOM helpers or website assets.
 
 Switch to the **[`lean`](https://github.com/EaZyStudiio/hoversense/tree/lean)** branch:
-* 100% stripped of website assets and playgrounds.
-* Pure geometric modeling (`distToRect`, `resolveScreen`, `computeIntent`, `arbitrate`).
-* Zero external dependencies.
+* Pure geometric calculations (`distToRect`, `resolveScreen`, `computeIntent`, `arbitrate`).
+* Zero DOM code, zero website assets.
+* Lightweight TypeScript core with zero dependencies.
 
 ```bash
 git checkout lean

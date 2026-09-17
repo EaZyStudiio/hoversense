@@ -981,6 +981,7 @@ function App() {
           <span className="kv"><b>scroll-lock</b>{dbg.scrollLocked ? 'yes' : 'no'}</span>
           <span className="kv"><b>takeover</b>{cfg.arbitration.releaseMode === 'scroll' ? dbg.takeover + 'px' : cfg.arbitration.releaseMode}</span>
           <span className="kv"><b>hover</b>{hits.length ? hits.map(h => h.id + ':' + h.source).join(' ') : 'none (deselected)'}</span>
+          <a href="./playground.html" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600, border: '1px solid var(--accent)', padding: '2px 8px', borderRadius: 6, marginLeft: 'auto' }}>⚡ DX Playground →</a>
         </div>
       </div>
 

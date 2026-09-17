@@ -4,7 +4,7 @@ HoverSense is a framework-agnostic pointerless interaction library for touch int
 
 It lets interfaces respond to where a user is looking, touching, holding, dragging, and scrolling without requiring the user to learn a new gesture.
 
-[Live Interactive Demo](https://eazystudiio.github.io/hoversense/) | [⚡ DX Live Playground](https://eazystudiio.github.io/hoversense/playground/) | [Developer Handbook](docs/DEVELOPER_GUIDE.md) | [DX Edge Case Analysis](docs/DX_ANALYSIS.md) | [Mathematical Specification](docs/SPECIFICATION.md)
+[Live Interactive Demo](https://eazystudiio.github.io/hoversense/) | [⚡ DX Live Playground](https://eazystudiio.github.io/hoversense/playground/) | [Developer Handbook](docs/DEVELOPER_GUIDE.md) | [DX Edge-Case Analysis](docs/DX_ANALYSIS.md) | [Mathematical Specification](docs/SPECIFICATION.md)
 
 ### 1-Line Turnkey Setup
 

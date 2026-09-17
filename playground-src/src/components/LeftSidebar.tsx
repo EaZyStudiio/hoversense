@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crosshair, RotateCcw, Undo2, Redo2, Sparkles } from 'lucide-react';
+import { Crosshair, RotateCcw, Undo2, Redo2 } from 'lucide-react';
 import type { TuningConfig, TelemetryData, VisualGuidesConfig, ShowcaseMode } from '../types';
 
 interface LeftSidebarProps {
@@ -147,16 +147,61 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </div>
         </div>
 
-        {/* Demo-Specific Properties Section - Specially Styled Card */}
+        {/* Active Arbitration Channels Selector (Toggle Gaze Horizon, Touch Intent, or Both) */}
+        <div className="tuning-section">
+          <span className="section-label mono">ARBITRATION CHANNELS</span>
+          <div className="channel-preset-pills mono">
+            <button
+              type="button"
+              className={`btn-preset-pill ${tuning.screenChannelEnabled !== false && tuning.touchChannelEnabled !== false ? 'active' : ''}`}
+              onClick={() => onChangeTuning({ screenChannelEnabled: true, touchChannelEnabled: true })}
+            >
+              Dual Channel
+            </button>
+            <button
+              type="button"
+              className={`btn-preset-pill ${tuning.screenChannelEnabled !== false && tuning.touchChannelEnabled === false ? 'active' : ''}`}
+              onClick={() => onChangeTuning({ screenChannelEnabled: true, touchChannelEnabled: false })}
+            >
+              Gaze Only
+            </button>
+            <button
+              type="button"
+              className={`btn-preset-pill ${tuning.screenChannelEnabled === false && tuning.touchChannelEnabled !== false ? 'active' : ''}`}
+              onClick={() => onChangeTuning({ screenChannelEnabled: false, touchChannelEnabled: true })}
+            >
+              Touch Only
+            </button>
+          </div>
+
+          <div className="guide-toggles-list">
+            <label className="guide-toggle-row">
+              <span className="toggle-text">Gaze Horizon (Screen)</span>
+              <input
+                type="checkbox"
+                checked={tuning.screenChannelEnabled !== false}
+                onChange={() => onChangeTuning({ screenChannelEnabled: tuning.screenChannelEnabled === false })}
+                className="guide-switch-input"
+              />
+            </label>
+            <label className="guide-toggle-row">
+              <span className="toggle-text">Touch Intent (Hold)</span>
+              <input
+                type="checkbox"
+                checked={tuning.touchChannelEnabled !== false}
+                onChange={() => onChangeTuning({ touchChannelEnabled: tuning.touchChannelEnabled === false })}
+                className="guide-switch-input"
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* Demo-Specific Properties Section - Minimalist Card */}
         <div className="tuning-section demo-properties-card">
           <div className="demo-card-header mono">
-            <div className="demo-card-title-group">
-              <Sparkles size={12} className="demo-card-icon" />
-              <span className="demo-card-title">
-                {showcase === 'mainframe' ? 'DEMO: MAINFRAME' : 'DEMO: COLLECTIVE'}
-              </span>
-            </div>
-            <span className="demo-override-badge">LAYOUT EXTENSION</span>
+            <span className="demo-card-title">
+              {showcase === 'mainframe' ? 'DEMO: MAINFRAME PROPERTIES' : 'DEMO: COLLECTIVE PROPERTIES'}
+            </span>
           </div>
 
           {showcase === 'mainframe' ? (

@@ -203,6 +203,9 @@ export const MainframeDX = ({ projects }) => {
         takeoverStartPx: 180,
         takeoverFullPx: 560,
       },
+      demoProperties: {
+        unitGapPx: 2,      // Tactical rack vertical row gap (0px to 24px)
+      },
     });
 
     return () => controller.destroy();
@@ -346,6 +349,9 @@ export const TeamGridDX = ({ members }) => {
         engageAt: 0.85,
         holdMsMin: 280,
         clearLatchOnTap: true,
+      },
+      demoProperties: {
+        scatterSpread: 1.00, // Staggered card vertical spread multiplier (0.8x to 2.5x)
       },
     });
 

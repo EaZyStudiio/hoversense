@@ -527,6 +527,61 @@ html, body {
   box-shadow: 0 0 6px var(--accent);
 }
 
+/* Demo-Specific Properties Card (Specially Styled) */
+.demo-properties-card {
+  background: rgba(255, 170, 0, 0.035);
+  border: 1px solid rgba(255, 170, 0, 0.3);
+  border-radius: 6px;
+  padding: 10px 12px;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 0 12px rgba(255, 170, 0, 0.02);
+}
+
+.demo-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 170, 0, 0.2);
+  padding-bottom: 6px;
+}
+
+.demo-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.demo-card-icon {
+  color: #ffaa00;
+}
+
+.demo-card-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffaa00;
+}
+
+.demo-override-badge {
+  font-size: 7.5px;
+  font-weight: 800;
+  background: rgba(255, 170, 0, 0.16);
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  color: #ffaa00;
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+}
+
+.val-amber {
+  color: #ffaa00 !important;
+}
+
+.range-slider.slider-amber::-webkit-slider-thumb {
+  background: #ffaa00;
+  box-shadow: 0 0 8px rgba(255, 170, 0, 0.7);
+}
+
 .select-dropdown {
   background: #0b0d14;
   border: 1px solid var(--border);

@@ -138,49 +138,49 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
 
   return (
     <div className="mainframe-mobile-viewport-wrapper">
+      {/* Visual Gaze Anchor Line (Stationary over mobile viewport) */}
+      {guides.showAnchorLine && tuning.screenChannelEnabled !== false && (
+        <div
+          className="visual-anchor-guide-line"
+          style={{ top: `${tuning.anchorRatio * 100}%` }}
+        >
+          <span className="anchor-label mono">
+            GAZE ANCHOR ({tuning.anchorRatio.toFixed(2)} vh)
+          </span>
+          <div className="anchor-hairline" />
+        </div>
+      )}
+
+      {/* Visual Falloff Band (Stationary soft highlight band) */}
+      {guides.showBand && tuning.screenChannelEnabled !== false && (
+        <div
+          className="visual-falloff-band"
+          style={{
+            top: `${Math.max(0, (tuning.anchorRatio - tuning.bandRatio / 2) * 100)}%`,
+            height: `${tuning.bandRatio * 100}%`,
+          }}
+        />
+      )}
+
+      {/* Safe Zone Bezels (Stationary Top Status Bar, Bottom Home Bar, Side Bezels) */}
+      {guides.showSafeZones && (
+        <div className="safe-zones-overlay" aria-hidden="true">
+          <div className="safe-zone-top">
+            <span className="safe-zone-tag mono">SAFE ZONE: TOP (STATUS BAR)</span>
+          </div>
+          <div className="safe-zone-bottom">
+            <span className="safe-zone-tag mono">SAFE ZONE: BOTTOM (HOME INDICATOR)</span>
+          </div>
+          <div className="safe-zone-left" />
+          <div className="safe-zone-right" />
+        </div>
+      )}
+
       {/* Scrollable Container with abundant top and bottom padding */}
       <div
         ref={scrollViewportRef}
         className="mainframe-scroll-canvas"
       >
-        {/* Visual Gaze Anchor Line (Strictly constrained to mobile viewport) */}
-        {guides.showAnchorLine && tuning.screenChannelEnabled !== false && (
-          <div
-            className="visual-anchor-guide-line"
-            style={{ top: `${tuning.anchorRatio * 100}%` }}
-          >
-            <span className="anchor-label mono">
-              GAZE ANCHOR ({tuning.anchorRatio.toFixed(2)} vh)
-            </span>
-            <div className="anchor-hairline" />
-          </div>
-        )}
-
-        {/* Visual Falloff Band (Soft highlight band) */}
-        {guides.showBand && tuning.screenChannelEnabled !== false && (
-          <div
-            className="visual-falloff-band"
-            style={{
-              top: `${Math.max(0, (tuning.anchorRatio - tuning.bandRatio / 2) * 100)}%`,
-              height: `${tuning.bandRatio * 100}%`,
-            }}
-          />
-        )}
-
-        {/* Safe Zone Bezels (Top Status Bar, Bottom Home Bar, Side Bezels) */}
-        {guides.showSafeZones && (
-          <div className="safe-zones-overlay" aria-hidden="true">
-            <div className="safe-zone-top">
-              <span className="safe-zone-tag mono">SAFE ZONE: TOP (STATUS BAR)</span>
-            </div>
-            <div className="safe-zone-bottom">
-              <span className="safe-zone-tag mono">SAFE ZONE: BOTTOM (HOME INDICATOR)</span>
-            </div>
-            <div className="safe-zone-left" />
-            <div className="safe-zone-right" />
-          </div>
-        )}
-
         {/* Abundant Spacing Header to allow scrolling past anchor */}
         <div className="abundant-scroll-lead">
           <span className="scroll-hint-text mono">↓ SCROLL DOWN PAST GAZE HORIZON ↓</span>

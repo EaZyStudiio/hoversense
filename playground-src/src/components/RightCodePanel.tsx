@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { oneDark } from '@codemirror/theme-one-dark';
@@ -18,18 +18,69 @@ interface RightCodePanelProps {
 export const RightCodePanel: React.FC<RightCodePanelProps> = ({
   activeFile,
   onSelectFile,
-  tuning: _tuning,
+  tuning,
   onApplyTuning,
 }) => {
   const [codeMap, setCodeMap] = useState<Record<string, string>>(CODE_SNIPPETS);
   const [copied, setCopied] = useState<boolean>(false);
   const [appliedFlash, setAppliedFlash] = useState<boolean>(false);
   const editorViewRef = useRef<EditorView | null>(null);
+  const isTypingRef = useRef<boolean>(false);
+  const typingTimerRef = useRef<number | null>(null);
 
   const currentCode = codeMap[activeFile] || '';
   const isEditable = activeFile.includes('.dx.');
 
+  // Bidirectional sync: when tuning changes from LeftSidebar, reflect values into the CodeMirror editor code
+  useEffect(() => {
+    if (isTypingRef.current) return;
+    setCodeMap((prev) => {
+      let updated = false;
+      const next = { ...prev };
+
+      if (next['Mainframe.dx.tsx']) {
+        const original = next['Mainframe.dx.tsx'];
+        let replaced = original
+          .replace(/anchorRatio:\s*[0-9.]+/, `anchorRatio: ${tuning.anchorRatio.toFixed(2)}`)
+          .replace(/bandRatio:\s*[0-9.]+/, `bandRatio: ${tuning.bandRatio.toFixed(2)}`)
+          .replace(/engageAt:\s*[0-9.]+/, `engageAt: ${tuning.engageAt.toFixed(2)}`)
+          .replace(/holdMsMin:\s*[0-9]+/, `holdMsMin: ${tuning.holdMsMin}`);
+        if (tuning.mainframeGapPx !== undefined) {
+          replaced = replaced.replace(/unitGapPx:\s*[0-9.]+/, `unitGapPx: ${tuning.mainframeGapPx}`);
+        }
+        if (replaced !== original) {
+          next['Mainframe.dx.tsx'] = replaced;
+          updated = true;
+        }
+      }
+
+      if (next['TeamGrid.dx.tsx']) {
+        const original = next['TeamGrid.dx.tsx'];
+        let replaced = original
+          .replace(/anchorRatio:\s*[0-9.]+/, `anchorRatio: ${tuning.anchorRatio.toFixed(2)}`)
+          .replace(/bandRatio:\s*[0-9.]+/, `bandRatio: ${tuning.bandRatio.toFixed(2)}`)
+          .replace(/engageAt:\s*[0-9.]+/, `engageAt: ${tuning.engageAt.toFixed(2)}`)
+          .replace(/holdMsMin:\s*[0-9]+/, `holdMsMin: ${tuning.holdMsMin}`);
+        if (tuning.collectiveScatterSpread !== undefined) {
+          replaced = replaced.replace(/scatterSpread:\s*[0-9.]+/, `scatterSpread: ${tuning.collectiveScatterSpread.toFixed(2)}`);
+        }
+        if (replaced !== original) {
+          next['TeamGrid.dx.tsx'] = replaced;
+          updated = true;
+        }
+      }
+
+      return updated ? next : prev;
+    });
+  }, [tuning]);
+
   const handleCodeChange = (val: string) => {
+    isTypingRef.current = true;
+    if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = window.setTimeout(() => {
+      isTypingRef.current = false;
+    }, 450);
+
     setCodeMap((prev) => ({ ...prev, [activeFile]: val }));
 
     // Auto-parse tuning changes from code editor in real time
@@ -38,12 +89,16 @@ export const RightCodePanel: React.FC<RightCodePanelProps> = ({
       const bandMatch = val.match(/bandRatio:\s*([0-9.]+)/);
       const engageMatch = val.match(/engageAt:\s*([0-9.]+)/);
       const holdMatch = val.match(/holdMsMin:\s*([0-9.]+)/);
+      const gapMatch = val.match(/unitGapPx:\s*([0-9.]+)/);
+      const spreadMatch = val.match(/scatterSpread:\s*([0-9.]+)/);
 
       const updates: Partial<TuningConfig> = {};
       if (anchorMatch) updates.anchorRatio = parseFloat(anchorMatch[1]);
       if (bandMatch) updates.bandRatio = parseFloat(bandMatch[1]);
       if (engageMatch) updates.engageAt = parseFloat(engageMatch[1]);
       if (holdMatch) updates.holdMsMin = parseInt(holdMatch[1], 10);
+      if (gapMatch) updates.mainframeGapPx = parseFloat(gapMatch[1]);
+      if (spreadMatch) updates.collectiveScatterSpread = parseFloat(spreadMatch[1]);
 
       if (Object.keys(updates).length > 0) {
         onApplyTuning(updates);
@@ -72,12 +127,16 @@ export const RightCodePanel: React.FC<RightCodePanelProps> = ({
     const bandMatch = val.match(/bandRatio:\s*([0-9.]+)/);
     const engageMatch = val.match(/engageAt:\s*([0-9.]+)/);
     const holdMatch = val.match(/holdMsMin:\s*([0-9.]+)/);
+    const gapMatch = val.match(/unitGapPx:\s*([0-9.]+)/);
+    const spreadMatch = val.match(/scatterSpread:\s*([0-9.]+)/);
 
     onApplyTuning({
       ...(anchorMatch ? { anchorRatio: parseFloat(anchorMatch[1]) } : {}),
       ...(bandMatch ? { bandRatio: parseFloat(bandMatch[1]) } : {}),
       ...(engageMatch ? { engageAt: parseFloat(engageMatch[1]) } : {}),
       ...(holdMatch ? { holdMsMin: parseInt(holdMatch[1], 10) } : {}),
+      ...(gapMatch ? { mainframeGapPx: parseFloat(gapMatch[1]) } : {}),
+      ...(spreadMatch ? { collectiveScatterSpread: parseFloat(spreadMatch[1]) } : {}),
     });
   };
 

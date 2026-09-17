@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crosshair, RotateCcw, Undo2, Redo2 } from 'lucide-react';
+import { Crosshair, RotateCcw, Undo2, Redo2, Sparkles } from 'lucide-react';
 import type { TuningConfig, TelemetryData, VisualGuidesConfig, ShowcaseMode } from '../types';
 
 interface LeftSidebarProps {
@@ -147,17 +147,23 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </div>
         </div>
 
-        {/* Demo-Specific Properties Section (Item 4) */}
-        <div className="tuning-section">
-          <span className="section-label mono">
-            {showcase === 'mainframe' ? 'DEMO: MAINFRAME PROPERTIES' : 'DEMO: COLLECTIVE PROPERTIES'}
-          </span>
+        {/* Demo-Specific Properties Section - Specially Styled Card */}
+        <div className="tuning-section demo-properties-card">
+          <div className="demo-card-header mono">
+            <div className="demo-card-title-group">
+              <Sparkles size={12} className="demo-card-icon" />
+              <span className="demo-card-title">
+                {showcase === 'mainframe' ? 'DEMO: MAINFRAME' : 'DEMO: COLLECTIVE'}
+              </span>
+            </div>
+            <span className="demo-override-badge">LAYOUT EXTENSION</span>
+          </div>
 
           {showcase === 'mainframe' ? (
             <div className="slider-control">
               <div className="slider-header mono">
                 <span>unit vertical gap</span>
-                <span className="slider-val">{(tuning.mainframeGapPx ?? 2)}px</span>
+                <span className="slider-val val-amber">{(tuning.mainframeGapPx ?? 2)}px</span>
               </div>
               <input
                 type="range"
@@ -166,14 +172,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 step="1"
                 value={tuning.mainframeGapPx ?? 2}
                 onChange={(e) => onChangeTuning({ mainframeGapPx: parseInt(e.target.value, 10) })}
-                className="range-slider"
+                className="range-slider slider-amber"
               />
             </div>
           ) : (
             <div className="slider-control">
               <div className="slider-header mono">
                 <span>scatter spread length</span>
-                <span className="slider-val">{(tuning.collectiveScatterSpread ?? 1.0).toFixed(2)}x</span>
+                <span className="slider-val val-amber">{(tuning.collectiveScatterSpread ?? 1.0).toFixed(2)}x</span>
               </div>
               <input
                 type="range"
@@ -182,7 +188,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 step="0.05"
                 value={tuning.collectiveScatterSpread ?? 1.0}
                 onChange={(e) => onChangeTuning({ collectiveScatterSpread: parseFloat(e.target.value) })}
-                className="range-slider"
+                className="range-slider slider-amber"
               />
             </div>
           )}

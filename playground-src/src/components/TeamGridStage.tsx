@@ -117,56 +117,60 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
 
   const spread = tuning.collectiveScatterSpread ?? 1.0;
 
-  const cardLayouts = [
-    { top: `${3.5 * spread}%`, left: '4%', rotate: '-2.5deg' },
-    { top: `${6.5 * spread}%`, right: '4%', rotate: '3deg' },
-    { top: `${36 * spread}%`, left: '6%', rotate: '1.5deg' },
-    { top: `${42 * spread}%`, right: '6%', rotate: '-2deg' },
-    { bottom: `${6.5 * spread}%`, left: '5%', rotate: '3.5deg' },
-    { bottom: `${3.5 * spread}%`, right: '5%', rotate: '-1.5deg' },
+  // Base tops for each card: Card 0 stays stationary, subsequent cards progressively lower by spread
+  const baseTops = [24, 94, 300, 390, 590, 680];
+  const stageMinHeight = Math.round(24 + (baseTops[baseTops.length - 1] - baseTops[0]) * spread + 300);
+
+  const cardLayouts: Array<{ top?: string; bottom?: string; left?: string; right?: string; rotate: string }> = [
+    { top: `${baseTops[0]}px`, left: '4%', rotate: '-2.5deg' },
+    { top: `${baseTops[0] + Math.round((baseTops[1] - baseTops[0]) * spread)}px`, right: '4%', rotate: '3deg' },
+    { top: `${baseTops[0] + Math.round((baseTops[2] - baseTops[0]) * spread)}px`, left: '6%', rotate: '1.5deg' },
+    { top: `${baseTops[0] + Math.round((baseTops[3] - baseTops[0]) * spread)}px`, right: '6%', rotate: '-2deg' },
+    { top: `${baseTops[0] + Math.round((baseTops[4] - baseTops[0]) * spread)}px`, left: '5%', rotate: '3.5deg' },
+    { top: `${baseTops[0] + Math.round((baseTops[5] - baseTops[0]) * spread)}px`, right: '5%', rotate: '-1.5deg' },
   ];
 
   return (
     <div className="collective-viewport-wrapper">
+      {/* Visual Gaze Anchor Line (Stationary over mobile viewport) */}
+      {guides.showAnchorLine && tuning.screenChannelEnabled !== false && (
+        <div
+          className="visual-anchor-guide-line"
+          style={{ top: `${tuning.anchorRatio * 100}%` }}
+        >
+          <span className="anchor-label mono">
+            CENTER FOCAL ({tuning.anchorRatio.toFixed(2)} vh)
+          </span>
+          <div className="anchor-hairline" />
+        </div>
+      )}
+
+      {/* Visual Falloff Band (Stationary soft highlight band) */}
+      {guides.showBand && tuning.screenChannelEnabled !== false && (
+        <div
+          className="visual-falloff-band"
+          style={{
+            top: `${Math.max(0, (tuning.anchorRatio - tuning.bandRatio / 2) * 100)}%`,
+            height: `${tuning.bandRatio * 100}%`,
+          }}
+        />
+      )}
+
+      {/* Safe Zone Bezels (Stationary Top Status Bar, Bottom Home Bar, Side Bezels) */}
+      {guides.showSafeZones && (
+        <div className="safe-zones-overlay" aria-hidden="true">
+          <div className="safe-zone-top">
+            <span className="safe-zone-tag mono">SAFE ZONE: TOP (STATUS BAR)</span>
+          </div>
+          <div className="safe-zone-bottom">
+            <span className="safe-zone-tag mono">SAFE ZONE: BOTTOM (HOME INDICATOR)</span>
+          </div>
+          <div className="safe-zone-left" />
+          <div className="safe-zone-right" />
+        </div>
+      )}
+
       <div ref={scrollViewportRef} className="collective-scroll-canvas">
-        {/* Visual Gaze Anchor Line */}
-        {guides.showAnchorLine && tuning.screenChannelEnabled !== false && (
-          <div
-            className="visual-anchor-guide-line"
-            style={{ top: `${tuning.anchorRatio * 100}%` }}
-          >
-            <span className="anchor-label mono">
-              CENTER FOCAL ({tuning.anchorRatio.toFixed(2)} vh)
-            </span>
-            <div className="anchor-hairline" />
-          </div>
-        )}
-
-        {/* Visual Falloff Band */}
-        {guides.showBand && tuning.screenChannelEnabled !== false && (
-          <div
-            className="visual-falloff-band"
-            style={{
-              top: `${Math.max(0, (tuning.anchorRatio - tuning.bandRatio / 2) * 100)}%`,
-              height: `${tuning.bandRatio * 100}%`,
-            }}
-          />
-        )}
-
-        {/* Safe Zone Bezels (Top Status Bar, Bottom Home Bar, Side Bezels) */}
-        {guides.showSafeZones && (
-          <div className="safe-zones-overlay" aria-hidden="true">
-            <div className="safe-zone-top">
-              <span className="safe-zone-tag mono">SAFE ZONE: TOP (STATUS BAR)</span>
-            </div>
-            <div className="safe-zone-bottom">
-              <span className="safe-zone-tag mono">SAFE ZONE: BOTTOM (HOME INDICATOR)</span>
-            </div>
-            <div className="safe-zone-left" />
-            <div className="safe-zone-right" />
-          </div>
-        )}
-
         {/* Abundant Scroll Lead */}
         <div className="abundant-scroll-lead" />
 
@@ -174,7 +178,7 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
         <div
           ref={stageContentRef}
           className="collective-canvas-inner"
-          style={{ minHeight: `calc(840px * ${spread})` }}
+          style={{ minHeight: `${stageMinHeight}px` }}
         >
           {/* Background Typography */}
           <div className="collective-background-text" aria-hidden="true">

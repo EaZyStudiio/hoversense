@@ -72,6 +72,7 @@ export class HoverSense {
   private cssBinder: CssVariableBinder | null = null;
   private feedbackOverlay: HoverSenseFeedback | null = null;
   private forceCleanup = false;
+  private itemDwellTimers = new Map<string, number>();
 
   private currentState: HoverSenseState = {
     hits: [],
@@ -90,6 +91,8 @@ export class HoverSense {
       scrollY: 0,
       takeover: 0,
       isCleanup: false,
+      dwellActiveId: null,
+      dwellMet: true,
     },
     isCleanup: false,
   };
@@ -207,6 +210,7 @@ export class HoverSense {
   public clear(): this {
     this.registry.clear();
     this.latch = null;
+    this.itemDwellTimers.clear();
     return this;
   }
 
@@ -306,6 +310,7 @@ export class HoverSense {
       this.feedbackOverlay = null;
     }
     this.registry.clear();
+    this.itemDwellTimers.clear();
     this.hoverListeners.clear();
     this.stateListeners.clear();
     this.gestureListeners.clear();
@@ -447,6 +452,28 @@ export class HoverSense {
 
     const hitsById = new Map<string, HoverHit>(hits.map(h => [h.id, h]));
 
+    // 4b. Dwell filter evaluation for discrete triggers
+    const dwellThreshold = cfg.arbitration.dwellThresholdMs ?? 0;
+    const topHit = hits[0];
+    let dwellActiveId: string | null = null;
+    let dwellMet = true;
+
+    if (topHit && topHit.strength >= 0.5) {
+      dwellActiveId = topHit.id;
+      if (!this.itemDwellTimers.has(topHit.id)) {
+        this.itemDwellTimers.set(topHit.id, now);
+      }
+      const dwellElapsed = now - this.itemDwellTimers.get(topHit.id)!;
+      dwellMet = dwellThreshold <= 0 || dwellElapsed >= dwellThreshold;
+    }
+
+    // Clean up timers for items no longer at peak strength
+    for (const id of this.itemDwellTimers.keys()) {
+      if (!topHit || id !== topHit.id) {
+        this.itemDwellTimers.delete(id);
+      }
+    }
+
     const debug = {
       phase: g.phase,
       intent,
@@ -461,6 +488,8 @@ export class HoverSense {
       scrollY: Math.round(window.scrollY),
       takeover: this.latch ? Math.round(Math.abs(window.scrollY - this.scrollAtLatch)) : 0,
       isCleanup: isCleanupFrame,
+      dwellActiveId,
+      dwellMet,
     };
 
     const newState: HoverSenseState = { hits, hitsById, debug, isCleanup: isCleanupFrame };

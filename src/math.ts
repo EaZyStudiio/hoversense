@@ -320,6 +320,12 @@ export function resolveScreen(
   const rows = groupByRow(items);
   const out: HoverHit[] = [];
 
+  const isAuto = cfg.resolve === 'auto';
+  const hasMultipleColumns = rows.some(r => r.items.length > 1);
+  const effectiveRowSplit = isAuto
+    ? (hasMultipleColumns ? 1.0 : (cfg.rowSplit ?? 0))
+    : (cfg.rowSplit ?? 0);
+
   for (const row of rows) {
     const N = row.items.length;
     // Relative position of anchor line within this row (0.0 at top, 1.0 at bottom)
@@ -333,14 +339,14 @@ export function resolveScreen(
       if (baseStrength <= 0.001) return;
 
       let colWeight = 1.0;
-      if (N > 1 && (cfg.rowSplit ?? 0) > 0) {
+      if (N > 1 && effectiveRowSplit > 0) {
         // Center position of this column's vertical slice in the row
         const colCenter = (colIdx + 0.5) * sliceWidth;
         const distFromCenter = Math.abs(v - colCenter);
         // Linear crossfade gradient falloff spanning sliceWidth
         const splitStrength = clamp(1 - distFromCenter / sliceWidth, 0, 1);
 
-        colWeight = lerp(1.0, splitStrength, cfg.rowSplit);
+        colWeight = lerp(1.0, splitStrength, effectiveRowSplit);
       }
 
       const finalStrength = baseStrength * colWeight;
@@ -352,6 +358,11 @@ export function resolveScreen(
 
   // Handle discrete resolution modes if requested
   if (cfg.resolve === 'global' && out.length > 1) {
+    out.sort((a, b) => b.strength - a.strength);
+    return [out[0]];
+  }
+
+  if (cfg.resolve === 'auto' && !hasMultipleColumns && out.length > 1) {
     out.sort((a, b) => b.strength - a.strength);
     return [out[0]];
   }

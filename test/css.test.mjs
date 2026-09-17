@@ -72,6 +72,44 @@ function testCssVariableBinder() {
   console.log('  [PASS] CssVariableBinder updates, latches, and cleans up');
 }
 
+function testEngagedAttributeAndIndependentTransforms() {
+  console.log('Testing data-hs-engaged and independent transforms...');
+  const binder = new CssVariableBinder({
+    precision: 0.01,
+    engageThreshold: 0.75,
+    bindIndependentTransforms: true,
+    scaleDelta: 0.08,
+  });
+
+  const el = new MockElement('card-engaged');
+  const elementsById = new Map([['card-engaged', el]]);
+
+  // Frame 1: strength = 0.50 (below engageThreshold 0.75)
+  binder.update([{ id: 'card-engaged', strength: 0.50, source: 'screen' }], elementsById, false);
+  assert.equal(el.getAttribute(DATA_ATTRS.HOVER), 'active');
+  assert.equal(el.getAttribute(DATA_ATTRS.ENGAGED), null, 'Engaged attribute should be null below threshold');
+  assert.equal(el.style.getPropertyValue(CSS_VARS.SCALE), '1.0400', 'Scale should be 1 + 0.50 * 0.08 = 1.0400');
+  assert.equal(el.style.getPropertyValue(CSS_VARS.TRANSLATE_Y), '-1.00px');
+
+  // Frame 2: strength = 0.80 (meets engageThreshold 0.75)
+  binder.update([{ id: 'card-engaged', strength: 0.80, source: 'screen' }], elementsById, false);
+  assert.equal(el.getAttribute(DATA_ATTRS.ENGAGED), 'true', 'Engaged attribute should be true at or above threshold');
+  assert.equal(el.style.getPropertyValue(CSS_VARS.SCALE), '1.0640', 'Scale should be 1 + 0.80 * 0.08 = 1.0640');
+  assert.equal(el.style.getPropertyValue(CSS_VARS.TRANSLATE_Y), '-1.60px');
+
+  // Frame 3: strength decays to 0.60 (drops below threshold)
+  binder.update([{ id: 'card-engaged', strength: 0.60, source: 'screen' }], elementsById, false);
+  assert.equal(el.getAttribute(DATA_ATTRS.ENGAGED), null, 'Engaged attribute should be removed when decaying below threshold');
+
+  // Frame 4: clean up element completely
+  binder.clear();
+  assert.equal(el.getAttribute(DATA_ATTRS.ENGAGED), null);
+  assert.equal(el.style.getPropertyValue(CSS_VARS.SCALE), '');
+  assert.equal(el.style.getPropertyValue(CSS_VARS.TRANSLATE_Y), '');
+
+  console.log('  [PASS] data-hs-engaged gates DOM mounting and independent transforms bind smoothly');
+}
+
 function testTouchHygiene() {
   console.log('Testing applyTouchHygiene...');
   const el = new MockElement('container');
@@ -87,5 +125,6 @@ function testTouchHygiene() {
 }
 
 testCssVariableBinder();
+testEngagedAttributeAndIndependentTransforms();
 testTouchHygiene();
 console.log('\nAll CSS Engine Unit Tests Passed Successfully!');

@@ -1,5 +1,6 @@
 export interface Project {
   id: string;
+  code: string;
   title: string;
   client: string;
   category: 'PERSONAL' | 'TEAM';
@@ -25,7 +26,14 @@ export interface TeamMember {
 
 export type ShowcaseMode = 'mainframe' | 'collective';
 
-export type ViewLayout = 'split' | 'stage' | 'code';
+export type MobileTab = 'preview' | 'tune' | 'code';
+
+export interface VisualGuidesConfig {
+  showAnchorLine: boolean;
+  showBand: boolean;
+  showSafeZones: boolean;
+  showTelemetryHUD: boolean;
+}
 
 export interface TelemetryData {
   phase: string;
@@ -35,6 +43,7 @@ export interface TelemetryData {
   source: string;
   strength: number;
   zoneWeight: number;
+  scrollY: number;
 }
 
 export interface TuningConfig {
@@ -43,6 +52,8 @@ export interface TuningConfig {
   engageAt: number;
   holdMsMin: number;
   holdMsMax: number;
-  staggerOffset: number;
+  scrollLockGraceMs: number;
   rowSplit: number;
+  takeoverFullPx: number;
+  releaseMode: 'off-screen' | 'scroll' | 'never';
 }

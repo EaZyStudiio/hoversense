@@ -1,109 +1,123 @@
 import React from 'react';
-import type { ShowcaseMode, ViewLayout, TelemetryData } from '../types';
+import type { ShowcaseMode, VisualGuidesConfig, MobileTab } from '../types';
 
 interface TopNavProps {
   showcase: ShowcaseMode;
   onSelectShowcase: (mode: ShowcaseMode) => void;
-  layout: ViewLayout;
-  onSelectLayout: (layout: ViewLayout) => void;
-  telemetry: TelemetryData;
+  guides: VisualGuidesConfig;
+  onToggleAllGuides: () => void;
+  onCenterScroll: () => void;
+  deviceFrame: boolean;
+  onToggleDeviceFrame: () => void;
   onOpenDossier: () => void;
+  mobileTab: MobileTab;
+  onSelectMobileTab: (tab: MobileTab) => void;
+  isMobileDevice: boolean;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
   showcase,
   onSelectShowcase,
-  layout,
-  onSelectLayout,
-  telemetry,
+  guides,
+  onToggleAllGuides,
+  onCenterScroll,
+  deviceFrame,
+  onToggleDeviceFrame,
   onOpenDossier,
+  mobileTab,
+  onSelectMobileTab,
+  isMobileDevice,
 }) => {
+  const allGuidesActive = guides.showAnchorLine && guides.showBand;
+
   return (
-    <header className="playground-header">
-      <div className="header-left">
-        <a href="./" className="brand-badge">
-          <span className="brand-dot" />
-          <span className="brand-name">HOVERSENSE</span>
-          <span className="brand-sub">DX LAB</span>
+    <header className="playground-top-header" aria-label="Main Navigation">
+      <div className="header-brand-cluster">
+        <a href="./" className="brand-link">
+          <span className="brand-dot-pulse" />
+          <span className="brand-title-text mono">HOVERSENSE</span>
+          <span className="brand-tag-dx mono">DX</span>
         </a>
 
-        {/* Showcase Switcher */}
-        <nav className="showcase-nav" aria-label="Showcase Switcher">
+        {/* Showcase Switcher Tabs */}
+        <div className="showcase-segmented-control" role="tablist">
           <button
             type="button"
-            className={`nav-tab ${showcase === 'mainframe' ? 'active' : ''}`}
+            className={`seg-btn mono ${showcase === 'mainframe' ? 'active' : ''}`}
             onClick={() => onSelectShowcase('mainframe')}
           >
-            1. The Mainframe (2x3 Stagger)
+            1. The Mainframe
           </button>
           <button
             type="button"
-            className={`nav-tab ${showcase === 'collective' ? 'active' : ''}`}
+            className={`seg-btn mono ${showcase === 'collective' ? 'active' : ''}`}
             onClick={() => onSelectShowcase('collective')}
           >
-            2. The Collective (Scattered)
+            2. The Collective
           </button>
-        </nav>
-      </div>
-
-      <div className="header-center">
-        {/* Telemetry Strip Pill */}
-        <div className="telemetry-pill">
-          <span className="telem-item">
-            <span className="telem-key">PHASE</span>
-            <span className={`telem-val phase-${telemetry.phase}`}>{telemetry.phase.toUpperCase()}</span>
-          </span>
-          <span className="telem-item">
-            <span className="telem-key">INTENT</span>
-            <span className="telem-val">{(telemetry.intent || 0).toFixed(2)}</span>
-          </span>
-          <span className="telem-item">
-            <span className="telem-key">TARGET</span>
-            <span className="telem-val target-highlight">{telemetry.activeId ? telemetry.activeId.toUpperCase() : 'NONE'}</span>
-          </span>
-          <span className="telem-item">
-            <span className="telem-key">SOURCE</span>
-            <span className={`telem-val source-${telemetry.source}`}>{telemetry.source.toUpperCase()}</span>
-          </span>
         </div>
       </div>
 
-      <div className="header-right">
-        {/* Layout View Mode Buttons */}
-        <div className="view-mode-toggle" aria-label="View Layout">
-          <button
-            type="button"
-            className={`mode-btn ${layout === 'split' ? 'active' : ''}`}
-            onClick={() => onSelectLayout('split')}
-            title="Side-by-side Stage and Code"
-          >
-            Split
-          </button>
-          <button
-            type="button"
-            className={`mode-btn ${layout === 'stage' ? 'active' : ''}`}
-            onClick={() => onSelectLayout('stage')}
-            title="Full Interactive Stage"
-          >
-            Stage Only
-          </button>
-          <button
-            type="button"
-            className={`mode-btn ${layout === 'code' ? 'active' : ''}`}
-            onClick={() => onSelectLayout('code')}
-            title="Full VS Code Inspector"
-          >
-            Code Only
-          </button>
-        </div>
-
-        {/* Dossier and Back Buttons */}
-        <button type="button" className="btn-dossier" onClick={onOpenDossier}>
-          📄 Edge Case Dossier
+      {/* Quick Visual Controls (Center) */}
+      <div className="header-tools-cluster">
+        {/* Quick Normal View Eye Button */}
+        <button
+          type="button"
+          className={`btn-tool-pill mono ${allGuidesActive ? 'active-tool' : ''}`}
+          onClick={onToggleAllGuides}
+          title={allGuidesActive ? 'Hide Visual Anchor Guides (Normal View)' : 'Show Visual Anchor Guides'}
+        >
+          <span>{allGuidesActive ? '👁️ Guides: ON' : '👁️‍🗨️ Normal View'}</span>
         </button>
 
-        <a href="../index.html" className="btn-back-link">
-          ← Physics Lab
+        {/* Center Canvas Button */}
+        <button
+          type="button"
+          className="btn-tool-pill mono"
+          onClick={onCenterScroll}
+          title="Center Preview Scroll"
+        >
+          <span>⌖ Center</span>
+        </button>
+
+        {/* Device Simulation Toggle (Desktop Only) */}
+        {!isMobileDevice && (
+          <button
+            type="button"
+            className={`btn-tool-pill mono ${deviceFrame ? 'active-tool' : ''}`}
+            onClick={onToggleDeviceFrame}
+            title={deviceFrame ? 'Switch to Full Width View' : 'Simulate Mobile Device Frame'}
+          >
+            <span>{deviceFrame ? '📱 Mobile Frame' : '🖥️ Full Width'}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Right Actions Cluster */}
+      <div className="header-actions-cluster">
+        {/* On mobile: Code toggle button */}
+        {isMobileDevice && (
+          <button
+            type="button"
+            className={`btn-tool-pill mono ${mobileTab === 'code' ? 'active-tool' : ''}`}
+            onClick={() => onSelectMobileTab(mobileTab === 'code' ? 'preview' : 'code')}
+          >
+            <span>💻 Code View</span>
+          </button>
+        )}
+
+        {/* Technical Dossier Modal Trigger */}
+        <button
+          type="button"
+          className="btn-tool-pill btn-dossier-pill mono"
+          onClick={onOpenDossier}
+        >
+          <span>📑 Dossier</span>
+        </button>
+
+        {/* Back to Physics Lab Link */}
+        <a href="../index.html" className="btn-tool-link mono">
+          <span>← Physics Lab</span>
         </a>
       </div>
     </header>

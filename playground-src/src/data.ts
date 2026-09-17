@@ -2,18 +2,20 @@ import type { Project, TeamMember } from './types';
 
 export const MOCK_PROJECTS: Project[] = [
   {
-    id: 'unit-01',
-    title: 'Neural Net V2',
-    client: 'Turing Dynamics',
+    id: 'unit-omega-01',
+    code: 'P-OMEGA-01',
+    title: 'AETHELGARD: THE SENTIENT CITY',
+    client: 'Turing Matrix',
     category: 'PERSONAL',
     tags: ['TENSOR', 'VISION', 'LOW_LATENCY'],
-    image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=700&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?q=80&w=700&auto=format&fit=crop',
     summary: 'Autonomous spatial perception cluster and optical gaze inference model.',
     year: 2026,
   },
   {
-    id: 'unit-02',
-    title: 'Cyber Physics',
+    id: 'unit-p1',
+    code: 'P1',
+    title: 'NEON SKYLINE',
     client: 'Quantum Labs',
     category: 'PERSONAL',
     tags: ['BIOMECHANICS', 'HERMITE', 'INTENT_ACC'],
@@ -22,8 +24,9 @@ export const MOCK_PROJECTS: Project[] = [
     year: 2026,
   },
   {
-    id: 'unit-03',
-    title: 'Aura Archive',
+    id: 'unit-p11',
+    code: 'P11',
+    title: 'AETHERIA PROTOCOL',
     client: 'Voxel Horizon',
     category: 'TEAM',
     tags: ['GPU_COMPO', 'CSS_VARS', 'ZERO_VDOM'],
@@ -32,8 +35,9 @@ export const MOCK_PROJECTS: Project[] = [
     year: 2025,
   },
   {
-    id: 'unit-04',
-    title: 'Void Synth',
+    id: 'unit-p13',
+    code: 'P13',
+    title: 'VAPORWAVE VISTA',
     client: 'Klang Soundworks',
     category: 'TEAM',
     tags: ['DSP_AUDIO', 'SPATIAL', 'REACT_19'],
@@ -42,8 +46,9 @@ export const MOCK_PROJECTS: Project[] = [
     year: 2025,
   },
   {
-    id: 'unit-05',
-    title: 'Nexus Cognition',
+    id: 'unit-p3',
+    code: 'P3',
+    title: 'TECHFLOW MOTION',
     client: 'Synapse Core',
     category: 'PERSONAL',
     tags: ['ARBITRATION', 'DUAL_CHANNEL', 'GAZE'],
@@ -52,12 +57,13 @@ export const MOCK_PROJECTS: Project[] = [
     year: 2024,
   },
   {
-    id: 'unit-06',
-    title: 'Pulse Matrix',
+    id: 'unit-p10',
+    code: 'P10',
+    title: 'NEBULA COMPUTE',
     client: 'Apex Creative',
     category: 'TEAM',
     tags: ['SHADERS', 'WEBGL', 'TOUCH_HYGIENE'],
-    image: 'https://images.unsplash.com/photo-1515260268569-9271009adfdb?q=80&w=700&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=700&auto=format&fit=crop',
     summary: 'High-frequency telemetry pipeline binding micro-interactions to gestures.',
     year: 2024,
   },
@@ -144,7 +150,85 @@ export const MOCK_TEAM: TeamMember[] = [
   },
 ];
 
-export const CODE_SNIPPETS = {
+export const CODE_SNIPPETS: Record<string, string> = {
+  'Mainframe.dx.tsx': `// [HOVERSENSE DX] Turnkey container with zero-render CSS variables and automatic mutation tracking
+import React, { useEffect, useRef } from 'react';
+import { createHoverSenseContainer } from 'hoversense';
+import 'hoversense/dist/hoversense.css';
+
+export const MainframeDX = ({ projects }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // 1-line turnkey initialization:
+    // - Automatically binds touch hygiene (pan-y, prevents iOS callouts)
+    // - Streams continuous strength (0.0 to 1.0) directly into CSS custom properties (--hs-strength)
+    // - Subscribes MutationObserver for dynamic tab filtering
+    const controller = createHoverSenseContainer(containerRef.current, {
+      itemSelector: '[data-hs-item]',
+      screen: {
+        anchorRatio: 0.28, // Eye-gaze reading horizon (placed between 0.26 and 0.30)
+        bandRatio: 0.30,   // Responsive falloff transition band
+        rowSplit: 0.0,     // 1 column tactical rack layout
+      },
+      touch: {
+        engageAt: 0.90,    // 90% intent required for touch lock
+        holdMsMin: 320,
+        scrollLockGraceMs: 220,
+      },
+      arbitration: {
+        releaseMode: 'off-screen',
+        takeoverStartPx: 180,
+        takeoverFullPx: 560,
+      },
+    });
+
+    return () => controller.destroy();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="mainframe-rack">
+      <div className="rack-header">
+        <span>UNIT_ID</span>
+        <span>STATUS</span>
+      </div>
+
+      {projects.map((project) => (
+        <article
+          key={project.id}
+          data-hs-item
+          data-hs-id={project.id}
+          className="rack-item"
+        >
+          <div className="unit-meta">
+            <span className="unit-code">{project.code}</span>
+            <h3 className="unit-title">{project.title}</h3>
+          </div>
+          <span className="status-dot" />
+
+          {/* Floating Mobile Portrait Peek Popup (Shown on Gaze Anchor or Touch Latch) */}
+          <div className="mobile-portrait-peek">
+            <div className="peek-crt-noise" />
+            <div className="peek-image-wrap">
+              <img src={project.image} alt={project.title} loading="lazy" />
+              <span className="peek-badge">PREV</span>
+            </div>
+            <h4 className="peek-title">{project.title}</h4>
+            <div className="peek-footer">
+              <span className="peek-live-indicator">
+                <span className="pulse-dot" /> LIVE
+              </span>
+              <span className="peek-access-text">ACCESS →</span>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+};`,
+
   'Mainframe.original.tsx': `// [ORIGINAL CODE] Hand-rolled Mainframe with manual refs, state thrashing, and GSAP collisions
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
@@ -195,18 +279,9 @@ export const Mainframe = ({ eazyProjects, allProjects, onSelect }) => {
     }
   }, [hits, isMobile, isInMainframeView, displayProjects]);
 
-  // Imperative GSAP animation overwrites inline styles on every hover
-  useEffect(() => {
-    if (!terminalRef.current) return;
-    gsap.fromTo(terminalRef.current, 
-      { filter: 'grayscale(100%) contrast(150%) hue-rotate(90deg)' }, 
-      { filter: 'grayscale(0%) contrast(100%) hue-rotate(0deg)', duration: 0.3, ease: "power2.out" }
-    );
-  }, [hoveredProject]);
-
   return (
     <section ref={sectionRef} className="mainframe-rack">
-      {displayProjects.map((project, index) => (
+      {displayProjects.map((project) => (
         <div 
           key={project.id}
           ref={el => {
@@ -229,32 +304,28 @@ export const Mainframe = ({ eazyProjects, allProjects, onSelect }) => {
   );
 };`,
 
-  'Mainframe.dx.tsx': `// [HOVERSENSE DX] Turnkey container with zero-render CSS variables and automatic mutation tracking
+  'TeamGrid.dx.tsx': `// [HOVERSENSE DX] TeamGrid with native dual-channel arbitration (Gaze Horizon + Touch Intent)
 import React, { useEffect, useRef } from 'react';
 import { createHoverSenseContainer } from 'hoversense';
-import 'hoversense/dist/hoversense.css';
 
-export const MainframeDX = ({ projects }) => {
+export const TeamGridDX = ({ members }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // 1-line turnkey initialization:
-    // - Automatically binds touch hygiene (pan-y, prevents iOS callouts)
-    // - Streams continuous strength (0.0 to 1.0) directly into CSS custom properties (--hs-strength)
-    // - Subscribes MutationObserver for dynamic tab filtering
+    // Both screen channel AND touch channel active out of the box!
     const controller = createHoverSenseContainer(containerRef.current, {
       itemSelector: '[data-hs-item]',
       screen: {
-        anchorRatio: 0.28, // Eye-gaze reading horizon
-        bandRatio: 0.32,
-        rowSplit: 1.0,     // Staggered 2-column independent crossfade
+        anchorRatio: 0.50, // Center focal horizon for scattered cards
+        bandRatio: 0.42,
+        resolve: 'global',
       },
       touch: {
-        engageAt: 0.90,    // 90% intent required for touch lock
-        holdMsMin: 320,
-        scrollLockGraceMs: 220,
+        engageAt: 0.85,
+        holdMsMin: 280,
+        clearLatchOnTap: true,
       },
     });
 
@@ -262,29 +333,34 @@ export const MainframeDX = ({ projects }) => {
   }, []);
 
   return (
-    // Outer container: touch-action: pan-y handled automatically
-    <div ref={containerRef} className="mainframe-stage">
-      <div className="rack-grid-2x3">
-        {projects.map((project, index) => (
-          <article
-            key={project.id}
-            data-hs-item
-            data-hs-id={project.id}
-            className={\`rack-unit \${index % 2 === 1 ? 'col-offset' : ''}\`}
-          >
-            <div className="unit-header">
-              <span className="unit-id">{project.id.toUpperCase()}</span>
-              <span className="unit-status-dot" />
-            </div>
-            <h3 className="unit-title">{project.title}</h3>
-            <p className="unit-desc">{project.summary}</p>
+    <div ref={containerRef} className="collective-container">
+      {/* Background Typographic Statement */}
+      <div className="background-giant-text">
+        <span>THE COLLECTIVE</span>
+        <h1>WE ARE EaZY</h1>
+      </div>
 
-            {/* Mobile portrait peek: zero React re-renders, driven directly by CSS */}
-            <div className="mobile-portrait-peek">
-              <img src={project.image} alt={project.title} loading="lazy" />
-              <div className="peek-badge">● LIVE PEAK</div>
+      {/* Foreground Scattered Cards */}
+      <div className="scattered-cards-layer">
+        {members.map((member, index) => (
+          <div
+            key={member.id}
+            data-hs-item
+            data-hs-id={member.id}
+            className={\`team-card card-pos-\${index}\`}
+          >
+            {/* B/W to Color image transition driven by GPU compositor */}
+            <img src={member.image} alt={member.name} className="bw-to-color-img" />
+            <div className="editorial-scrim" />
+            <div className="card-content">
+              <span className="specialty-tag">{member.style}</span>
+              <p className="personality-quote">“{member.personalityQuote}”</p>
+              <div className="card-bottom">
+                <h3>{member.name}</h3>
+                <span>{member.role}</span>
+              </div>
             </div>
-          </article>
+          </div>
         ))}
       </div>
     </div>
@@ -352,69 +428,6 @@ export const TeamGrid = ({ displayMembers }) => {
   );
 };`,
 
-  'TeamGrid.dx.tsx': `// [HOVERSENSE DX] TeamGrid with native dual-channel arbitration (Gaze Horizon + Touch Intent)
-import React, { useEffect, useRef } from 'react';
-import { createHoverSenseContainer } from 'hoversense';
-
-export const TeamGridDX = ({ members }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    // Both screen channel AND touch channel active out of the box!
-    const controller = createHoverSenseContainer(containerRef.current, {
-      itemSelector: '[data-hs-item]',
-      screen: {
-        anchorRatio: 0.50, // Center focal horizon for scattered cards
-        bandRatio: 0.40,
-        resolve: 'closest',
-      },
-      touch: {
-        engageAt: 0.85,
-        holdMsMin: 280,
-        clearLatchOnTap: true,
-      },
-    });
-
-    return () => controller.destroy();
-  }, []);
-
-  return (
-    <div ref={containerRef} className="collective-container">
-      {/* Background Typographic Statement */}
-      <div className="background-giant-text">
-        <span>THE COLLECTIVE</span>
-        <h1>WE ARE EaZY</h1>
-      </div>
-
-      {/* Foreground Scattered Cards */}
-      <div className="scattered-cards-layer">
-        {members.map((member, index) => (
-          <div
-            key={member.id}
-            data-hs-item
-            data-hs-id={member.id}
-            className={\`team-card card-pos-\${index}\`}
-          >
-            {/* B/W to Color image transition driven by GPU compositor */}
-            <img src={member.image} alt={member.name} className="bw-to-color-img" />
-            <div className="editorial-scrim" />
-            <div className="card-content">
-              <span className="specialty-tag">{member.style}</span>
-              <p className="personality-quote">“{member.personalityQuote}”</p>
-              <div className="card-bottom">
-                <h3>{member.name}</h3>
-                <span>{member.role}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};`,
-
   'hoversense.css': `/* HoverSense Zero-Render 60fps CSS Custom Property Stylesheet */
 [data-hs-item] {
   --hs-strength: 0;
@@ -428,18 +441,17 @@ export const TeamGridDX = ({ members }) => {
   transition: transform 90ms linear, filter 90ms linear, box-shadow 90ms linear;
 }
 
-/* 2x3 Mainframe Unit Transform */
-.rack-unit[data-hs-item] {
-  transform: scale(calc(1 + var(--hs-strength, 0) * 0.035));
+/* Tactical Mainframe Unit */
+.rack-unit-item[data-hs-item] {
   border-left-color: color-mix(in srgb, var(--accent, #ff3300) calc(var(--hs-strength, 0) * 100%), #222);
 }
 
-/* Mobile Portrait Peek Reveal */
+/* Floating Portrait Peek Popup */
 .mobile-portrait-peek {
-  max-height: calc(var(--hs-strength, 0) * 180px);
   opacity: var(--hs-strength, 0);
-  overflow: hidden;
-  transition: max-height 120ms ease, opacity 90ms linear;
+  transform: scale(calc(0.92 + var(--hs-strength, 0) * 0.08));
+  pointer-events: calc(var(--hs-strength, 0) > 0.5 ? auto : none);
+  transition: opacity 120ms linear, transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* TeamGrid Scattered Card Filter & Scale */
@@ -454,7 +466,7 @@ export const TeamGridDX = ({ members }) => {
 
 .team-card[data-hs-item] .personality-quote {
   opacity: var(--hs-strength, 0);
-  transform: translateY(calc((1 - var(--hs-strength, 0)) * 10px));
+  transform: translateY(calc((1 - var(--hs-strength, 0)) * 8px));
   transition: opacity 90ms linear, transform 90ms linear;
 }`,
 };

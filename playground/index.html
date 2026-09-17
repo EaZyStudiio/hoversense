@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <title>HoverSense - Developer Experience Playground (2x3 Stagger)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../dist/hoversense.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="brand-block">
+      <span class="brand-badge mono">DX PLAYGROUND</span>
+      <h1 class="brand-title">The Mainframe // Asymmetric 2x3 Rack</h1>
+      <span class="brand-sub mono">(Zero Virtual DOM Re-renders)</span>
+    </div>
+
+    <nav class="nav-actions">
+      <button class="btn-nav btn-dossier" id="btn-open-dossier">
+        <span>📑</span>
+        <span>Edge Case Dossier</span>
+      </button>
+      <a href="../index.html" class="btn-nav">
+        <span>←</span>
+        <span>Back to Physics Lab</span>
+      </a>
+    </nav>
+  </header>
+
+  <!-- Live Telemetry Teleprompter -->
+  <div class="telemetry-strip mono">
+    <div class="telemetry-row">
+      <div class="t-kv"><b>Phase:</b> <span id="t-phase">IDLE</span></div>
+      <div class="t-kv"><b>Intent:</b> <span id="t-intent">0.00</span></div>
+      <div class="t-kv"><b>Authority:</b> <span id="t-authority">0.00</span></div>
+      <div class="t-kv"><b>Target:</b> <span id="t-active" style="color: var(--accent-orange);">NONE</span></div>
+      <div class="t-kv"><b>Strength:</b> <span id="t-strength">0.000</span></div>
+    </div>
+
+    <div class="offset-picker">
+      <span style="color: var(--muted); font-size: 10px;">COLUMN OFFSET:</span>
+      <button class="btn-pill btn-offset" data-offset="80">80px</button>
+      <button class="btn-pill btn-offset active" data-offset="180">180px</button>
+      <button class="btn-pill btn-offset" data-offset="260">260px</button>
+    </div>
+  </div>
+
+  <!-- Viewport Gaze Line Overlay -->
+  <div class="gaze-line-overlay" id="gaze-line" style="top: 28vh;">
+    <span class="gaze-line-badge" id="gaze-label">GAZE ANCHOR (0.28 vh)</span>
+  </div>
+
+  <!-- Main Split Layout -->
+  <main class="playground-container">
+    <!-- Left: 2x3 Staggered Rack -->
+    <section class="rack-stage">
+      <div class="stage-header">
+        <h2 class="stage-title">Active Units Matrix</h2>
+        <p class="stage-desc">
+          Column 2 is staggered downward by an exaggerated offset. Notice how Column 1 and Column 2 crossfade independently as you scroll past the 28% eye-gaze anchor line, and how holding locks touch authority without triggering iOS long-press callout menus.
+        </p>
+      </div>
+
+      <div id="rack-container">
+        <!-- Injected dynamically by rack.js -->
+      </div>
+    </section>
+
+    <!-- Right: VS Code Previewer & Live Editor -->
+    <section class="editor-stage">
+      <div id="editor-container">
+        <!-- Injected dynamically by editor.js -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Slide-Out Edge Case Dossier Panel -->
+  <div class="dossier-overlay" id="dossier-overlay">
+    <div class="dossier-panel">
+      <div class="dossier-head">
+        <h3 class="dossier-title mono">DX Architectural Analysis & Edge Cases</h3>
+        <button class="btn-close-dossier mono" id="btn-close-dossier">ESC / CLOSE [X]</button>
+      </div>
+
+      <div class="dossier-content">
+        <div class="dossier-card">
+          <span class="badge badge-win">BIG WIN</span>
+          <h4>60fps GPU Hardware Execution</h4>
+          <p>The original implementation called <code>setHoveredProject</code> on every continuous frame, causing React to reconcile and re-render 50 DOM nodes at 60fps. The DX architecture writes directly to <code>--hs-strength</code>, offloading scale and shadow rendering to the GPU compositor thread with zero React re-renders.</p>
+        </div>
+
+        <div class="dossier-card">
+          <span class="badge badge-edge">EDGE CASE 1</span>
+          <h4>Secondary Glitch Side-Effects (GSAP Queuing)</h4>
+          <p><b>The Conflict:</b> In the original code, hovering a card triggered a CRT glitch animation on a separate preview terminal monitor. When scrolling fast, 10 animations queued simultaneously.</p>
+          <p><b>How DX Solves It:</b> Decoupling continuous styling from discrete events. Continuous card scaling runs in CSS at 60fps, while heavy secondary side-effects (sound effects, terminal glitches) only subscribe to discrete latch events (<code>phase === 'engaged'</code>).</p>
+        </div>
+
+        <div class="dossier-card">
+          <span class="badge badge-edge">EDGE CASE 2</span>
+          <h4>Mobile Portrait Peek with Hidden Images</h4>
+          <p><b>The Conflict:</b> Mobile cards keep the preview photo hidden until hovered. If using pure CSS variables, the image tag must already exist in the DOM.</p>
+          <p><b>Resolution:</b> The peek container uses <code>max-height: calc(var(--hs-strength, 0) * 180px)</code> and <code>opacity: var(--hs-strength, 0)</code>. For bandwidth-heavy apps requiring lazy DOM mounting, developers can gate rendering on <code>strength &gt;= 0.70</code>.</p>
+        </div>
+
+        <div class="dossier-card">
+          <span class="badge badge-win">BIG WIN</span>
+          <h4>Automated Touch Hygiene</h4>
+          <p><b>The Problem:</b> Mobile Safari and Chrome default to text selection and 500ms long-press menus. Without strict hygiene, dwelling for 320ms opens the iOS action sheet.</p>
+          <p><b>Resolution:</b> <code>createHoverSenseContainer</code> automatically sets <code>touch-action: pan-y</code>, strips <code>-webkit-touch-callout</code>, and disables selection callouts while preserving native vertical scroll.</p>
+        </div>
+
+        <div class="dossier-card">
+          <span class="badge badge-edge">EDGE CASE 3</span>
+          <h4>Asymmetric 2x3 Staggered Columns</h4>
+          <p><b>The Conflict:</b> When Column 2 is offset by 180px, items in adjacent columns do not align horizontally. Naive row-based hover triggers Column 2 prematurely.</p>
+          <p><b>Resolution:</b> HoverSense measures physical viewport bounding boxes on every frame. Setting <code>rowSplit: 1.0</code> treats columns independently, ensuring each card highlights only when its physical center crosses the gaze anchor.</p>
+        </div>
+
+        <div class="dossier-card">
+          <span class="badge badge-loss">TRADE-OFF / DOWNSIDE</span>
+          <h4>Mental Model Shift</h4>
+          <p>Developers accustomed to writing purely reactive JSX (<code>{isHovered &amp;&amp; &lt;ActiveBadge /&gt;}</code>) must learn to let CSS variables drive continuous state, reserving component state for discrete milestones.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

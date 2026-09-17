@@ -1,0 +1,730 @@
+/**
+ * HoverSense DX Playground - Stylesheet
+ *
+ * Minimalist, editorial cyberpunk design inspired by The Collective and The Mainframe.
+ * Employs flat colors, crisp typography, and hardware-accelerated GPU transforms.
+ */
+
+:root {
+  --bg: #060709;
+  --surface: #0b0d13;
+  --panel: #10131c;
+  --border: #1a1e2b;
+  --border-focus: #ff3300;
+  --accent-orange: #ff3300;
+  --accent-cyan: #0ea5e9;
+  --text: #eef1f8;
+  --muted: #677088;
+  --mono-font: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --sans-font: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --offset-px: 180px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans-font);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overscroll-behavior-y: none;
+}
+
+.mono {
+  font-family: var(--mono-font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   Header & Top HUD
+   ========================================================================== */
+
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(11, 13, 19, 0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-badge {
+  background: var(--accent-orange);
+  color: #000;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.06em;
+}
+
+.brand-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: var(--muted);
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .brand-sub { display: inline; }
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-nav {
+  font-family: var(--mono-font);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: border-color 120ms ease, background 120ms ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-nav:hover {
+  border-color: var(--accent-cyan);
+  color: #fff;
+}
+
+.btn-dossier {
+  background: rgba(255, 51, 0, 0.12);
+  border-color: rgba(255, 51, 0, 0.35);
+  color: var(--accent-orange);
+}
+
+.btn-dossier:hover {
+  background: var(--accent-orange);
+  color: #000;
+  border-color: var(--accent-orange);
+}
+
+/* ==========================================================================
+   Telemetry Teleprompter Bar
+   ========================================================================== */
+
+.telemetry-strip {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 20px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.telemetry-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.t-kv {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.t-kv b {
+  color: var(--muted);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.t-kv span {
+  font-weight: 600;
+}
+
+.offset-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-pill {
+  font-family: var(--mono-font);
+  font-size: 10px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.btn-pill:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.btn-pill.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Gaze Line Indicator
+   ========================================================================== */
+
+.gaze-line-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(14, 165, 233, 0.35);
+  pointer-events: none;
+  z-index: 50;
+  transition: top 120ms ease;
+}
+
+.gaze-line-badge {
+  position: absolute;
+  right: 14px;
+  top: -10px;
+  font-family: var(--mono-font);
+  font-size: 9px;
+  color: var(--accent-cyan);
+  background: var(--bg);
+  padding: 1px 6px;
+  border: 1px solid rgba(14, 165, 233, 0.4);
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   Main Layout: Split Stage & Code Inspector
+   ========================================================================== */
+
+.playground-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  padding: 24px 16px 120px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .playground-container {
+    grid-template-columns: 1.1fr 0.9fr;
+    padding: 32px 24px 120px;
+  }
+}
+
+/* ==========================================================================
+   2x3 Staggered Rack Stage
+   ========================================================================== */
+
+.rack-stage {
+  /* Critical touch hygiene enforced */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+
+.stage-header {
+  margin-bottom: 24px;
+}
+
+.stage-title {
+  font-size: 24px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stage-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* 2 Column Staggered Grid with Deep Offset */
+.rack-grid-2x3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.rack-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rack-col-offset {
+  margin-top: var(--offset-px);
+  transition: margin-top 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Flat, Non-Cardbox Unit Styling */
+.unit-item {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid #282e3f;
+  border-radius: 6px;
+  padding: 16px 18px;
+  cursor: pointer;
+  overflow: hidden;
+  will-change: transform;
+
+  /* 90ms linear transition curve ensures zero-latency feel */
+  transition:
+    transform 90ms linear,
+    border-color 90ms linear,
+    box-shadow 90ms linear,
+    background 90ms linear;
+
+  /* Hardware-accelerated GPU transform using HoverSense CSS variables */
+  transform: scale(calc(1 + var(--hs-strength, 0) * 0.038))
+             translateY(calc(var(--hs-strength, 0) * -3px));
+
+  border-left-color: color-mix(in srgb, var(--unit-accent, var(--accent-orange)) calc(var(--hs-strength, 0) * 100%), #282e3f);
+  box-shadow: 0 8px calc(var(--hs-strength, 0) * 26px) rgba(0, 0, 0, calc(var(--hs-strength, 0) * 0.45));
+}
+
+.unit-item[data-hs-source="touch"] {
+  border-left-width: 4px;
+}
+
+/* Scanline micro-texture */
+.unit-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.3) 3px,
+    rgba(0, 0, 0, 0.3) 4px
+  );
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.unit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.unit-id {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+.unit-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background 90ms linear, box-shadow 90ms linear;
+}
+
+.unit-item[data-hs-hover="active"] .status-dot {
+  background: var(--unit-accent, var(--accent-orange));
+  box-shadow: 0 0 8px var(--unit-accent, var(--accent-orange));
+}
+
+.unit-title {
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin-top: 8px;
+  color: #fff;
+  position: relative;
+  z-index: 2;
+}
+
+.unit-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+  position: relative;
+  z-index: 2;
+}
+
+.unit-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.unit-tag {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #a2abbd;
+  letter-spacing: 0.04em;
+}
+
+/* Mobile Portrait Peek Container */
+.mobile-peek {
+  position: relative;
+  z-index: 2;
+  margin-top: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #000;
+
+  /* Zero-render reveal via CSS custom properties */
+  max-height: calc(var(--hs-strength, 0) * 180px);
+  opacity: var(--hs-strength, 0);
+  transition: max-height 140ms ease, opacity 90ms linear;
+}
+
+.mobile-peek img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(calc((1 - var(--hs-strength, 0)) * 100%)) brightness(0.9);
+  transition: filter 90ms linear;
+}
+
+.peek-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--unit-accent, var(--accent-orange));
+  color: var(--unit-accent, var(--accent-orange));
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   Open-Source VS Code / Dark IDE Previewer
+   ========================================================================== */
+
+.editor-window {
+  background: #0a0c10;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: calc(100vh - 160px);
+  position: sticky;
+  top: 96px;
+}
+
+.editor-tabs-bar {
+  display: flex;
+  background: #060709;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.editor-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-family: var(--mono-font);
+  font-size: 11px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.editor-tab:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+
+.editor-tab.active {
+  background: #0a0c10;
+  color: #fff;
+  font-weight: 600;
+  border-top: 2px solid var(--accent-orange);
+}
+
+.editor-tab-icon {
+  font-size: 12px;
+}
+
+.editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: #080a0e;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.editor-status-badge {
+  color: var(--accent-cyan);
+  font-size: 10px;
+}
+
+.btn-apply-config {
+  font-family: var(--mono-font);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--accent-orange);
+  color: #000;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: none;
+  transition: opacity 120ms ease;
+}
+
+.btn-apply-config:hover {
+  opacity: 0.9;
+}
+
+.editor-body {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.line-numbers-col {
+  width: 44px;
+  padding: 16px 8px;
+  font-family: var(--mono-font);
+  font-size: 11px;
+  line-height: 1.6;
+  color: #3b4255;
+  text-align: right;
+  user-select: none;
+  border-right: 1px solid var(--border);
+  background: #07080c;
+  overflow: hidden;
+}
+
+.code-viewport {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.code-display {
+  padding: 16px 18px;
+  font-family: var(--mono-font);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: #c9d1e4;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.code-editor-textarea {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: #c9d1e4;
+  font-family: var(--mono-font);
+  font-size: 11.5px;
+  line-height: 1.6;
+  padding: 16px 18px;
+  border: none;
+  outline: none;
+  resize: none;
+  tab-size: 2;
+}
+
+.editor-footer {
+  padding: 6px 14px;
+  background: #060709;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   Dossier / Edge Cases Slide-Out Panel
+   ========================================================================== */
+
+.dossier-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.dossier-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.dossier-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 640px;
+  background: #090b10;
+  border-left: 1px solid var(--border);
+  z-index: 210;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dossier-overlay.open .dossier-panel {
+  transform: translateX(0);
+}
+
+.dossier-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dossier-title {
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.btn-close-dossier {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-close-dossier:hover {
+  color: #fff;
+  border-color: #fff;
+}
+
+.dossier-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.dossier-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.dossier-card h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #fff;
+}
+
+.dossier-card p {
+  font-size: 12px;
+  color: #a6afc3;
+  margin-bottom: 8px;
+}
+
+.dossier-card .badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
+
+.badge-win { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.badge-edge { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.badge-loss { background: rgba(239, 68, 68, 0.15); color: #ef4444; }

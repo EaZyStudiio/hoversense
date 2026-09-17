@@ -10,6 +10,7 @@ import {
   FileText,
   ArrowLeft,
   Hand,
+  HelpCircle,
 } from 'lucide-react';
 import type { ShowcaseMode, VisualGuidesConfig } from '../types';
 
@@ -29,6 +30,7 @@ interface TopNavProps {
   isMobileDevice: boolean;
   touchSim: boolean;
   onToggleTouchSim: () => void;
+  onOpenSimToast?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -47,6 +49,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   isMobileDevice,
   touchSim,
   onToggleTouchSim,
+  onOpenSimToast,
 }) => {
   const allGuidesActive = guides.showAnchorLine && guides.showBand;
 
@@ -190,6 +193,19 @@ export const TopNav: React.FC<TopNavProps> = ({
               <Hand size={13} />
               <span>Touch Sim: {touchSim ? 'ON' : 'OFF'}</span>
             </button>
+
+            {/* Quick Touch Emulation Instructions Trigger */}
+            {onOpenSimToast && touchSim && (
+              <button
+                type="button"
+                className="btn-tool-pill mono btn-help-pill"
+                onClick={onOpenSimToast}
+                title="Show Touch Emulation Instructions & Controls"
+              >
+                <HelpCircle size={13} />
+                <span>Guide</span>
+              </button>
+            )}
 
             <button
               type="button"

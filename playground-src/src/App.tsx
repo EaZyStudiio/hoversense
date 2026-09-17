@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Hand } from 'lucide-react';
 import type {
   ShowcaseMode,
   MobileTab,
@@ -185,6 +186,20 @@ export default function App() {
     }
   };
 
+  const handleOpenSimToast = () => {
+    setShowSimToast(true);
+  };
+
+  const handleToggleTouchSim = () => {
+    setTouchSim((t) => {
+      const next = !t;
+      if (next) {
+        setShowSimToast(true);
+      }
+      return next;
+    });
+  };
+
   return (
     <>
       {/* Top Navigation Bar */}
@@ -203,7 +218,8 @@ export default function App() {
         onOpenDossier={() => setDossierOpen(true)}
         isMobileDevice={isMobileDevice}
         touchSim={touchSim}
-        onToggleTouchSim={() => setTouchSim((t) => !t)}
+        onToggleTouchSim={handleToggleTouchSim}
+        onOpenSimToast={handleOpenSimToast}
       />
 
       {/* Master 3-Column Workspace */}
@@ -229,6 +245,20 @@ export default function App() {
         {/* CENTER COLUMN: Mobile Preview Canvas */}
         {(!isMobileDevice || mobileTab === 'preview') && (
           <section className="center-canvas-pane" aria-label="Interactive Preview Canvas">
+            {/* Minimized Restore Pill for Touch Emulation Instructions */}
+            {touchSim && !showSimToast && !isMobileDevice && (
+              <button
+                type="button"
+                className="touch-sim-restore-pill mono"
+                onClick={handleOpenSimToast}
+                title="Click to reopen Touch Emulation instructions & guide"
+              >
+                <Hand size={11} />
+                <span>TOUCH SIM ACTIVE</span>
+                <span className="restore-pill-badge">HELP ?</span>
+              </button>
+            )}
+
             {/* Session Touch Emulation Toast */}
             {touchSim && showSimToast && !isMobileDevice && (
               <div className="touch-sim-notification-toast mono">
@@ -249,8 +279,9 @@ export default function App() {
                       type="button"
                       className="btn-toast-confirm"
                       onClick={handleDismissSimToast}
+                      title="Minimize instructions banner"
                     >
-                      Got it
+                      Minimize
                     </button>
                     <button
                       type="button"
@@ -265,7 +296,7 @@ export default function App() {
                   </div>
                 </div>
                 <p className="toast-desc">
-                  Click &amp; drag mouse to swipe/scroll. Hovers trigger via gaze anchor horizon or touch-hold.
+                  Click &amp; drag mouse to swipe/scroll. Hovers trigger via gaze anchor horizon or touch-hold. Click &apos;TOUCH SIM ACTIVE&apos; or Top Bar &apos;Guide&apos; to reopen.
                 </p>
               </div>
             )}

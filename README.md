@@ -1,193 +1,154 @@
 # HoverSense
 
-HoverSense is a framework-agnostic pointerless interaction library for touch interfaces.
+Turnkey pointerless interaction engine for modern touch interfaces.
 
-It lets interfaces respond to where a user is looking, touching, holding, dragging, and scrolling without requiring the user to learn a new gesture.
+Touchscreens do not have a continuous hover cursor. HoverSense bridges this physical gap by turning vertical reading gaze and deliberate touch intent into smooth, hardware-accelerated spatial hover.
 
-[Live Interactive Demo](https://eazystudiio.github.io/hoversense/) | [⚡ DX Live Playground](https://eazystudiio.github.io/hoversense/playground/) | [Developer Handbook](docs/DEVELOPER_GUIDE.md) | [DX Edge-Case Analysis](docs/DX_ANALYSIS.md) | [Mathematical Specification](docs/SPECIFICATION.md)
+Think of this like React Native: you get a turnkey, high-level developer experience that mounts in three lines and requires zero virtual DOM re-renders, while retaining the freedom to drop down to bare-metal math whenever you need custom pipelines.
 
-### 1-Line Turnkey Setup
+[⚡ Live Playground](https://eazystudiio.github.io/hoversense/playground/) | [📱 Mobile Demo](https://eazystudiio.github.io/hoversense/) | [Architecture Dossier](docs/DX_ANALYSIS.md) | [Bare-Metal Math Branch](https://github.com/EaZyStudiio/hoversense/tree/lean)
+
+---
+
+## 3-Line Turnkey Quickstart
+
+No gesture listeners, no animation queues, no frame loops. One container helper wires up touch hygiene, auto-measures targets, and streams hardware-accelerated CSS custom properties directly to the GPU:
 
 ```ts
 import { createHoverSenseContainer } from 'hoversense';
 import 'hoversense/dist/hoversense.css';
 
-// Automatically configures touch hygiene, discovers items, binds CSS variables, and renders feedback
-const controller = createHoverSenseContainer('#my-cards', {
+// Mount on any container element or selector
+const controller = createHoverSenseContainer('#card-grid', {
   itemSelector: '.card',
-  feedback: true,
 });
 ```
 
-### Headless Engine Setup
-
-```ts
-import { HoverSense } from 'hoversense';
-
-const hover = new HoverSense({
-  screen: { anchorRatio: 0.42, bandRatio: 0.30 },
-  touch: { holdMsMin: 320, engageAt: 0.90 },
-  bindCssVariables: true,
-});
-
-// Register any DOM element, ref, or dynamic bounding rect
-document.querySelectorAll('.card').forEach((el, index) => {
-  hover.register(`card-${index}`, el);
-});
-
-
-// Listen to spatial hover changes
-hover.onHover((hits) => {
-  hits.forEach(hit => {
-    console.log(`Target: ${hit.id}, Strength: ${hit.strength.toFixed(2)}, Source: ${hit.source}`);
-  });
-});
-```
-
-```kotlin
-// Android (Jetpack Compose / Kotlin)
-val hitTarget = HoverSenseMath.getHitUnderPoint(touchPoint, registeredItems, touchConfig)
-val intent = HoverSenseMath.computeIntent(gestureState, touchConfig, System.currentTimeMillis().toDouble())
-```
-
-```swift
-// iOS (SwiftUI / UIKit)
-let hits = HoverSenseMath.resolveScreen(items: items, height: viewHeight, config: screenConfig)
-```
-
-> **The goal is not to teach users another interaction pattern. It is to make the interface feel like it already understands them.**
-
 ---
 
-## Conceptual Taxonomy
+## Zero Virtual DOM Re-renders (CSS Engine)
 
-- **HoverSense**: The library and runtime engine you install.
-- **Pointerless interaction**: The category and physical UX problem (touchscreens have no continuous cursor).
-- **Spatial hover**: The underlying interaction model and physics (viewport gaze anchor, proximity falloff, intent accumulation, and latch arbitration).
+HoverSense bypasses the JavaScript framework re-render lifecycle completely during 60fps scrolling. It injects CSS custom properties and data attributes directly onto DOM nodes:
 
----
+```css
+.card {
+  /* Modern independent scale property powered by HoverSense */
+  scale: var(--hs-scale, 1);
+  opacity: calc(0.75 + var(--hs-strength, 0) * 0.25);
+  transition: box-shadow 150ms ease;
+}
 
-## Live Mobile Experience
+/* Discrete DOM subtree reveal without virtual DOM churn */
+.card .preview-popup {
+  display: none;
+}
 
-To experience spatial hover in your hand, open the interactive demo on a physical phone:
-
-**https://eazystudiio.github.io/hoversense/**
-
-The demo supports:
-- 1 x 10 single-column list
-- 2 x 5 offset two-column layout
-- 3 x 3 responsive grid
-- Real-time HUD and debug overlays
-- Dynamic tuning sliders for all mathematical parameters
-
----
-
-## Installation & Distribution
-
-### 1. Package Managers
-
-```bash
-# npm
-npm install hoversense
-
-# pnpm
-pnpm add hoversense
-
-# yarn
-yarn add hoversense
-
-# bun
-bun add hoversense
+.card[data-hs-engaged="true"] .preview-popup {
+  display: block;
+}
 ```
 
-### 2. Browser CDN (Zero Build Steps)
+### Injected Variables and Attributes
 
-Modern ES Module:
-```html
-<script type="module">
-  import { HoverSense } from 'https://unpkg.com/hoversense/dist/hoversense.es.js';
-  const hover = new HoverSense();
-</script>
-```
-
-Classical Script Tag (sets `window.HoverSense`):
-```html
-<script src="https://unpkg.com/hoversense/dist/hoversense.iife.js"></script>
-<script>
-  const hover = new HoverSense.HoverSense();
-</script>
-```
-
-### 3. Manual Copy-Paste Drop-In
-
-Copy [`src/math.ts`](src/math.ts) and [`src/engine.ts`](src/engine.ts) directly into your repository. There are zero external dependencies.
-
-Detailed guides for React, Vue 3, Svelte, and Angular are available in [docs/INTEGRATION.md](docs/INTEGRATION.md).
-
----
-
-## Architecture & Physics
-
-HoverSense decouples passive visual focus from active touch gestures through dual-channel arbitration:
-
-1. **Screen Channel (Gaze Anchor)**: Focuses content aligned with natural reading gaze (42% from top of viewport) with smooth cubic Hermite falloff.
-2. **Touch Channel (Intent Accumulator)**: Fuses dwell dwell-time ($320\text{ms}$ minimum) and lateral drag displacement ($46\text{px}$ saturation). Suppresses capacitive sensor jitter ($9\text{px}$ deadzone) and classifies rapid vertical flicks as native scrolls ($220\text{ms}$ grace window).
-3. **Biomechanical Safe Zones**: Feathered peripheral filters that suppress resting thumbs ($80\%\text{--}100\%$ viewport height), holding palms, and system back-swipe gesture edges.
-4. **Channel Arbitration**: Smoothly crossfades between screen focus and touch latching. When touch engages, it locks authority until the user scrolls the element off-screen or exceeds takeover scroll distance.
-
-Complete formulas, proofs, and edge-case guarantees are documented in [docs/SPECIFICATION.md](docs/SPECIFICATION.md).
-
----
-
-## Native Platform Ports
-
-For non-web native platforms, standalone implementations of the HoverSense math core are available under [`ports/`](ports/):
-
-| Platform / Language | Directory | Use Cases |
+| Token | Type | Description |
 | :--- | :--- | :--- |
-| **Android / Kotlin** | [`ports/kotlin`](ports/kotlin/) | Jetpack Compose, Android Views |
-| **Java** | [`ports/java`](ports/java/) | Android API 21+, JVM |
-| **Python** | [`ports/python`](ports/python/) | Data analysis, PyGame, ML simulation |
-| **C++** | [`ports/cpp`](ports/cpp/) | Unreal Engine, game HUDs, embedded Qt |
-| **Rust** | [`ports/rust`](ports/rust/) | Native apps, Bevy, WebAssembly |
+| `--hs-strength` | CSS Variable | Continuous proximity strength (`0.000` to `1.000`). |
+| `--hs-scale` | CSS Variable | Pre-calculated scale multiplier (`1.000` to `1.050`). |
+| `--hs-translate-y` | CSS Variable | Subtle lift displacement (`0px` to `-2px`). |
+| `--hs-source` | CSS Variable | Active channel (`screen`, `touch`, or `idle`). |
+| `data-hs-hover` | Attribute | Set to `active` when item has non-zero proximity. |
+| `data-hs-engaged` | Attribute | Set to `true` when strength reaches threshold (default: `0.75`). |
 
 ---
 
-## Configuration Reference
+## Solved Out of the Box
+
+1. **Conditional DOM Gating (`data-hs-engaged`)**:
+   CSS variables run on the GPU compositor and cannot mount heavy DOM nodes. HoverSense automatically toggles `data-hs-engaged="true"` at a configurable threshold (`engageThreshold: 0.75`), allowing CSS attribute selectors to reveal preview popups without downloading heavy assets upfront.
+
+2. **GSAP & Imperative Animation Decoupling**:
+   HoverSense binds modern independent transform properties (`scale`, `translate`) rather than overwriting monolithic `transform`. Imperative animation libraries like GSAP can animate element coordinates without colliding with spatial hover scaling.
+
+3. **Automatic Staggered Rack Splitting (`resolve: 'auto'`)**:
+   In asymmetric multi-column layouts, items cross the gaze horizon at different scroll offsets. With `resolve: 'auto'`, the engine inspects geometric bounds and automatically engages independent column crossfading (`rowSplit = 1.0`).
+
+4. **Scroll-Flick Dwell Filter (`dwellThresholdMs`)**:
+   Rapid vertical flick gestures are classified as native scrolling, preventing brief 16ms popup flashes across intermediate items. Popups only engage when gaze dwells on a target.
+
+5. **Automated Touch Hygiene**:
+   Injects native `touch-action: pan-y`, eliminates the 300ms mobile tap delay, and suppresses unwanted iOS text selection callouts.
+
+---
+
+## Headless API (Custom Pipelines)
+
+For custom React state hooks, canvas overlays, or analytics, instantiate the headless engine:
 
 ```ts
 import { HoverSense } from 'hoversense';
 
 const engine = new HoverSense({
   screen: {
-    anchorRatio: 0.42,       // Anchor line position (fraction of viewport height)
-    bandRatio: 0.30,         // Falloff band radius
-    resolve: 'all',          // 'all' (continuous gradient) or 'global' (single winner)
-    rowSplit: 0.0            // 0.0: all cols hover; 1.0: vertical column staggering
+    anchorRatio: 0.42,
+    bandRatio: 0.30,
+    resolve: 'auto',
   },
   touch: {
-    holdMsMin: 320,          // Minimum hold duration to engage (ms)
-    holdMsMax: 1200,         // Maximum hold duration in suppressed zones (ms)
-    dragDeadzonePx: 9,       // Capacitive jitter filter (px)
-    dragFullPx: 46,          // Distance to reach full drag intent (px)
-    verticalDragWeight: 0.22,// Dampening for vertical displacement
-    scrollLockGraceMs: 220,  // Time window for vertical scroll flick detection
-    scrollLockAxisRatio: 1.3,// |dy| / |dx| ratio to classify scroll gesture
-    engageAt: 1.0,           // Intent threshold required to lock hover
-    outerFalloffPx: 42,      // Proximity snap cushion outside items (px)
-    inBetweenRatio: 0.40,    // Gutter snap ratio (0.0 = deadzone, 1.0 = full snap)
-    clearLatchOnTap: false   // Clear touch latch on subsequent tap
+    holdMsMin: 320,
+    engageAt: 0.90,
   },
   arbitration: {
-    takeoverStartPx: 180,    // Scroll distance before touch authority decays
-    takeoverFullPx: 560,     // Scroll distance for complete screen takeover
-    releaseMode: 'off-screen'// 'off-screen', 'scroll', or 'never'
-  }
+    dwellThresholdMs: 80,
+    releaseMode: 'off-screen',
+  },
 });
+
+// Register elements
+document.querySelectorAll('.card').forEach((el, index) => {
+  engine.register(`card-${index}`, el);
+});
+
+// Subscribe to state
+engine.onHover((hits, state) => {
+  console.log('Top Hit:', hits[0]);
+});
+```
+
+---
+
+## Interactive Website & Playground
+
+This repository contains the interactive website and developer playground:
+
+```bash
+# Install dependencies
+npm install
+
+# Run the playground locally
+cd playground-src
+npm install
+npm run dev
+```
+
+Visit the live production deployment: [https://eazystudiio.github.io/hoversense/playground/](https://eazystudiio.github.io/hoversense/playground/)
+
+---
+
+## Need Bare-Metal Math Only?
+
+If you are building custom WebGL shaders, Three.js scenes, game viewports, or native mobile apps (Kotlin / Swift / Rust), you do not need DOM helpers or website assets.
+
+Switch to the **[`lean`](https://github.com/EaZyStudiio/hoversense/tree/lean)** branch:
+* 100% stripped of website assets and playgrounds.
+* Pure geometric modeling (`distToRect`, `resolveScreen`, `computeIntent`, `arbitrate`).
+* Zero external dependencies.
+
+```bash
+git checkout lean
 ```
 
 ---
 
 ## License
 
-MIT License (c) EaZy (https://github.com/EaZyStudiio)
+MIT License. Copyright (c) 2026 EaZy (EaZyStudiio).

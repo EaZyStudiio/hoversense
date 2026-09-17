@@ -94,10 +94,12 @@ export default function App() {
 
   const centerScrollTriggerRef = useRef<(() => void) | null>(null);
 
-  // Detect mobile viewport width (< 820px)
+  // Detect mobile viewport width (< 820px) or touch pointer
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileDevice(window.innerWidth < 820);
+      const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+      const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+      setIsMobileDevice(window.innerWidth < 820 || isCoarse || isTouch);
     };
     handleResize();
     window.addEventListener('resize', handleResize, { passive: true });
@@ -311,7 +313,7 @@ export default function App() {
                   guides={guides}
                   onTelemetryUpdate={setTelemetry}
                   onCenterRequest={(fn) => { centerScrollTriggerRef.current = fn; }}
-                  touchSim={touchSim}
+                  touchSim={touchSim && !isMobileDevice}
                 />
               ) : (
                 <TeamGridStage
@@ -320,7 +322,7 @@ export default function App() {
                   guides={guides}
                   onTelemetryUpdate={setTelemetry}
                   onCenterRequest={(fn) => { centerScrollTriggerRef.current = fn; }}
-                  touchSim={touchSim}
+                  touchSim={touchSim && !isMobileDevice}
                   preventImageDrag={preventImageDrag}
                 />
               )}

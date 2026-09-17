@@ -22,6 +22,18 @@ export function useTouchDragScroll<T extends HTMLElement>(
     const container = containerRef.current;
     if (!container || !enabled) return;
 
+    // Detect if current environment is a touch device or coarse pointer
+    const isCoarse = typeof window !== 'undefined' && (
+      window.matchMedia('(pointer: coarse)').matches ||
+      ('ontouchstart' in window) ||
+      navigator.maxTouchPoints > 0
+    );
+
+    if (isCoarse) {
+      // Coarse pointer / mobile: Rely entirely on native kinetic scrolling
+      return;
+    }
+
     container.classList.add('touch-sim-active');
 
     const cancelInertia = () => {
@@ -32,7 +44,8 @@ export function useTouchDragScroll<T extends HTMLElement>(
     };
 
     const handlePointerDown = (e: PointerEvent) => {
-      if (e.button !== 0) return;
+      // Exclusively handle primary mouse button; touch/pen are ignored
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
 
       cancelInertia();
       isDraggingRef.current = true;
@@ -53,29 +66,36 @@ export function useTouchDragScroll<T extends HTMLElement>(
     };
 
     const handlePointerMove = (e: PointerEvent) => {
-      if (!isDraggingRef.current) return;
+      if (!isDraggingRef.current || e.pointerType !== 'mouse') return;
 
       const rawDeltaY = e.clientY - startPosRef.current.y;
-      const deltaX = e.clientX - startPosRef.current.x;
+      const rawDeltaX = e.clientX - startPosRef.current.x;
 
-      if (!hasMovedRef.current && (Math.abs(rawDeltaY) > 3 || Math.abs(deltaX) > 3)) {
-        hasMovedRef.current = true;
+      if (!hasMovedRef.current) {
+        // 8px deadzone prevents accidental click cancellation during micro-movements
+        if (Math.hypot(rawDeltaX, rawDeltaY) > 8) {
+          hasMovedRef.current = true;
+        }
       }
 
       if (hasMovedRef.current) {
-        // Fast, natural mobile touch drag multiplier (1.75x)
-        const amplifiedDeltaY = rawDeltaY * 1.75;
-        container.scrollTop = startPosRef.current.scrollTop - amplifiedDeltaY;
+        // Direct 1:1 displacement tracking without erratic multipliers
+        container.scrollTop = startPosRef.current.scrollTop - rawDeltaY;
 
         const now = performance.now();
         const history = velocityHistoryRef.current;
         history.push({ y: e.clientY, time: now });
-        if (history.length > 8) history.shift();
+
+        // Maintain a rolling 100ms sample window
+        const cutoff = now - 100;
+        while (history.length > 0 && history[0].time < cutoff) {
+          history.shift();
+        }
       }
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-      if (!isDraggingRef.current) return;
+      if (!isDraggingRef.current || e.pointerType !== 'mouse') return;
       isDraggingRef.current = false;
       container.classList.remove('touch-sim-dragging');
 
@@ -90,28 +110,35 @@ export function useTouchDragScroll<T extends HTMLElement>(
       if (hasMovedRef.current) {
         const history = velocityHistoryRef.current;
         const now = performance.now();
-        // Sample recent samples in the last 100ms for accurate flick velocity
-        const recent = history.filter((pt) => now - pt.time < 120);
-        const sampleStart = recent[0] || history[0];
-        const sampleEnd = history[history.length - 1];
 
-        if (sampleStart && sampleEnd) {
-          const dt = sampleEnd.time - sampleStart.time;
-          if (dt > 8) {
-            const vy = (sampleEnd.y - sampleStart.y) / dt; // px/ms
-            if (Math.abs(vy) > 0.10) {
-              // High-momentum iOS-style flick physics: 75x impulse, 0.955 soft decay
-              let currentVelocity = vy * 75;
-              const momentumStep = () => {
-                currentVelocity *= 0.955;
-                container.scrollTop -= currentVelocity;
-                if (Math.abs(currentVelocity) > 0.35) {
-                  inertiaRafRef.current = requestAnimationFrame(momentumStep);
-                } else {
-                  inertiaRafRef.current = null;
-                }
-              };
-              inertiaRafRef.current = requestAnimationFrame(momentumStep);
+        // Check for staleness: if the pointer paused (> 60ms) before release, momentum is zero
+        if (history.length >= 2) {
+          const lastSample = history[history.length - 1];
+          const firstSample = history[0];
+          const pauseDuration = now - lastSample.time;
+
+          if (pauseDuration <= 60) {
+            const dt = lastSample.time - firstSample.time;
+            if (dt >= 12) {
+              const vy = (lastSample.y - firstSample.y) / dt; // px/ms
+
+              // Flick threshold: minimum 0.15 px/ms
+              if (Math.abs(vy) > 0.15) {
+                // Clamped velocity limit (max 2.5 px/ms)
+                const clampedVy = Math.max(-2.5, Math.min(2.5, vy));
+                let currentStep = clampedVy * 16;
+
+                const momentumStep = () => {
+                  currentStep *= 0.92;
+                  container.scrollTop -= currentStep;
+                  if (Math.abs(currentStep) > 0.5) {
+                    inertiaRafRef.current = requestAnimationFrame(momentumStep);
+                  } else {
+                    inertiaRafRef.current = null;
+                  }
+                };
+                inertiaRafRef.current = requestAnimationFrame(momentumStep);
+              }
             }
           }
         }
@@ -131,6 +158,7 @@ export function useTouchDragScroll<T extends HTMLElement>(
     container.addEventListener('pointerup', handlePointerUp);
     container.addEventListener('pointercancel', handlePointerUp);
     container.addEventListener('click', handleClickCapture, true);
+    container.addEventListener('wheel', cancelInertia, { passive: true });
 
     return () => {
       cancelInertia();
@@ -140,6 +168,7 @@ export function useTouchDragScroll<T extends HTMLElement>(
       container.removeEventListener('pointerup', handlePointerUp);
       container.removeEventListener('pointercancel', handlePointerUp);
       container.removeEventListener('click', handleClickCapture, true);
+      container.removeEventListener('wheel', cancelInertia);
     };
   }, [enabled]);
 

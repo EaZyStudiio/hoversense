@@ -1892,32 +1892,34 @@ html, body {
    MOBILE TOUCH SIMULATION ON DESKTOP: Click-Drag as Swipe & Circle Cursor
    ========================================================================== */
 
-.touch-sim-active {
-  user-select: none !important;
-  -webkit-user-select: none !important;
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='rgba(0,240,255,0.18)' stroke='%2300f0ff' stroke-width='1.5'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%2300f0ff'/%3E%3C/svg%3E") 12 12, grab !important;
-}
+@media (hover: hover) and (pointer: fine) {
+  .touch-sim-active {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='rgba(0,240,255,0.18)' stroke='%2300f0ff' stroke-width='1.5'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%2300f0ff'/%3E%3C/svg%3E") 12 12, grab !important;
+  }
 
-.touch-sim-active * {
-  user-select: none !important;
-  -webkit-user-select: none !important;
-  cursor: inherit !important;
-}
+  .touch-sim-active * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    cursor: inherit !important;
+  }
 
-.touch-sim-active.touch-sim-dragging,
-.touch-sim-active.touch-sim-dragging * {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='rgba(255,51,0,0.35)' stroke='%23ff3300' stroke-width='2'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%23ff3300'/%3E%3C/svg%3E") 12 12, grabbing !important;
-}
+  .touch-sim-active.touch-sim-dragging,
+  .touch-sim-active.touch-sim-dragging * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='rgba(255,51,0,0.35)' stroke='%23ff3300' stroke-width='2'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%23ff3300'/%3E%3C/svg%3E") 12 12, grabbing !important;
+  }
 
-/* Purposefully ignore real mouse hover in the air when touch emulation is active */
-.touch-sim-active .tactical-unit-row:not(.unit-focused) {
-  border-left-color: rgba(255, 255, 255, 0.08) !important;
-}
+  /* Purposefully ignore real mouse hover in the air when touch emulation is active */
+  .touch-sim-active .tactical-unit-row:not(.unit-focused) {
+    border-left-color: rgba(255, 255, 255, 0.08) !important;
+  }
 
-.touch-sim-active .tactical-unit-row:not(.unit-focused) .floating-portrait-peek {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transform: translateY(8px) scale(0.96) !important;
+  .touch-sim-active .tactical-unit-row:not(.unit-focused) .floating-portrait-peek {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(8px) scale(0.96) !important;
+  }
 }
 
 /* Session Touch Emulation Toast Banner */

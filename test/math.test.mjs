@@ -162,4 +162,71 @@ assert.equal(getHitUnderPoint({ x: 55, y: 25 }, singleItem, { outerFalloffPx: 42
 assert.equal(getHitUnderPoint({ x: 100, y: 25 }, singleItem, { outerFalloffPx: 42 }), null);
 console.log('  [PASS] getHitUnderPoint & gutter deadzone/single item cases');
 
-console.log('\nAll 15 Math & Edge-Case Tests Passed Successfully!');
+// 6. Dual-Channel Empty Space Deselect & Gaze Takeover Arbitration
+function arbitrate(params) {
+  const { screenHits, touchHit, authority, modes, isCleanup } = params;
+  const safeAuthority = clamp(authority, 0, 1);
+  const map = new Map();
+
+  const addHit = (h, multiplier) => {
+    if (!h) return;
+    const s = h.strength * multiplier;
+    if (s <= 0.001) return;
+    const prev = map.get(h.id);
+    if (!prev || s > prev.strength) {
+      map.set(h.id, { ...h, strength: s });
+    }
+  };
+
+  const hasTouchTarget = Boolean(touchHit && touchHit.id);
+  const effectiveAuthority = (hasTouchTarget && !isCleanup) ? safeAuthority : 0;
+
+  if (modes.screen) {
+    const screenScale = modes.touch ? 1 - effectiveAuthority : 1.0;
+    screenHits.forEach(h => addHit(h, screenScale));
+  }
+
+  if (modes.touch && !isCleanup) {
+    addHit(touchHit, safeAuthority);
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.strength - a.strength);
+}
+
+const sampleScreenHits = [{ id: 'card-gaze-1', strength: 0.95, source: 'screen' }];
+const sampleTouchHit = { id: 'card-touch-2', strength: 1.0, source: 'touch' };
+
+// When touch target is active, touch holds authority and scales screen down
+const engagedResult = arbitrate({
+  screenHits: sampleScreenHits,
+  touchHit: sampleTouchHit,
+  authority: 1.0,
+  modes: { screen: true, touch: true },
+});
+assert.equal(engagedResult.length, 1);
+assert.equal(engagedResult[0].id, 'card-touch-2');
+
+// When touch is in empty space (touchHit is null), Gaze immediately takes over at full strength
+const emptySpaceResult = arbitrate({
+  screenHits: sampleScreenHits,
+  touchHit: null,
+  authority: 1.0,
+  modes: { screen: true, touch: true },
+});
+assert.equal(emptySpaceResult.length, 1, 'Gaze takes over when touchHit is null');
+assert.equal(emptySpaceResult[0].id, 'card-gaze-1');
+assert.equal(emptySpaceResult[0].strength, 0.95, 'Gaze retains full strength');
+
+// When an explicit cleanup/deselect frame occurs, Gaze takes over and touch hit is omitted
+const cleanupResult = arbitrate({
+  screenHits: sampleScreenHits,
+  touchHit: sampleTouchHit,
+  authority: 1.0,
+  modes: { screen: true, touch: true },
+  isCleanup: true,
+});
+assert.equal(cleanupResult.length, 1, 'Cleanup forces Gaze takeover');
+assert.equal(cleanupResult[0].id, 'card-gaze-1');
+console.log('  [PASS] dual-channel empty space deselect & gaze takeover');
+
+console.log('\nAll 16 Math & Edge-Case Tests Passed Successfully!');

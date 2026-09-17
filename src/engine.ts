@@ -71,6 +71,7 @@ export class HoverSense {
 
   private cssBinder: CssVariableBinder | null = null;
   private feedbackOverlay: HoverSenseFeedback | null = null;
+  private forceCleanup = false;
 
   private currentState: HoverSenseState = {
     hits: [],
@@ -88,7 +89,9 @@ export class HoverSense {
       latch: null,
       scrollY: 0,
       takeover: 0,
+      isCleanup: false,
     },
+    isCleanup: false,
   };
 
   // Event Listeners
@@ -365,8 +368,17 @@ export class HoverSense {
       g.phase = 'engaged';
       const items = this.measureItems();
       const hitId = getHitUnderPoint({ x: g.startX, y: g.startY }, items, cfg.touch);
-      this.latch = { id: hitId, x: g.startX, y: g.startY };
-      this.scrollAtLatch = window.scrollY;
+      if (hitId) {
+        this.latch = { id: hitId, x: g.startX, y: g.startY };
+        this.scrollAtLatch = window.scrollY;
+      } else {
+        // Touched in empty space: deselect / cleanup
+        const wasLatched = Boolean(this.latch);
+        this.latch = null;
+        if (wasLatched || cfg.arbitration.emptySpaceCleanup !== false) {
+          this.forceCleanup = true;
+        }
+      }
       this.gestureListeners.forEach(cb => cb(g));
     }
 
@@ -397,9 +409,14 @@ export class HoverSense {
             authority = 1;
           }
         } else {
-          // If latched on empty space, release after minor scroll
-          const d = Math.abs(window.scrollY - this.scrollAtLatch);
-          authority = d > cfg.arbitration.takeoverStartPx ? 0 : 1;
+          // If latched on empty space or target invalid, release immediately when emptySpaceCleanup is enabled
+          if (cfg.arbitration.emptySpaceCleanup !== false) {
+            authority = 0;
+            this.latch = null;
+          } else {
+            const d = Math.abs(window.scrollY - this.scrollAtLatch);
+            authority = d > cfg.arbitration.takeoverStartPx ? 0 : 1;
+          }
         }
       } else {
         authority = 1; // never release
@@ -417,11 +434,15 @@ export class HoverSense {
       ? { id: this.latch.id, strength: 1.0, source: 'touch' }
       : null;
 
+    const isCleanupFrame = Boolean(this.forceCleanup);
+    this.forceCleanup = false;
+
     const hits = arbitrate({
       screenHits,
       touchHit,
       authority,
       modes: cfg.modes,
+      isCleanup: isCleanupFrame || !this.latch?.id,
     });
 
     const hitsById = new Map<string, HoverHit>(hits.map(h => [h.id, h]));
@@ -439,9 +460,10 @@ export class HoverSense {
       latch: this.latch,
       scrollY: Math.round(window.scrollY),
       takeover: this.latch ? Math.round(Math.abs(window.scrollY - this.scrollAtLatch)) : 0,
+      isCleanup: isCleanupFrame,
     };
 
-    const newState: HoverSenseState = { hits, hitsById, debug };
+    const newState: HoverSenseState = { hits, hitsById, debug, isCleanup: isCleanupFrame };
     this.currentState = newState;
 
     // Direct CSS custom property injection (zero-render styling at 60fps)
@@ -461,9 +483,9 @@ export class HoverSense {
       + (debug.latch ? `${debug.latch.id ?? 'empty'},${Math.round(debug.latch.x)},${Math.round(debug.latch.y)}` : '-')
       + debug.scrollY + (debug.zoneId ?? '') + (debug.phase === 'probing' ? `${Math.round(g.x / 4)},${Math.round(g.y / 4)}` : '');
 
-    if (stateKey !== this.lastStateKey) {
+    if (stateKey !== this.lastStateKey || isCleanupFrame) {
       this.lastStateKey = stateKey;
-      this.hoverListeners.forEach(cb => cb(hits, newState));
+      this.hoverListeners.forEach(cb => cb(hits, newState, isCleanupFrame));
       this.stateListeners.forEach(cb => cb(newState));
     }
   }
@@ -555,8 +577,18 @@ export class HoverSense {
       // Engaged gestures latch in place until scrolled away
       this.scrollAtLatch = window.scrollY;
     } else if (isTap(g, this.config.touch)) {
-      if (this.config.touch.clearLatchOnTap) {
+      const items = this.measureItems();
+      const hitId = getHitUnderPoint({ x: g.startX, y: g.startY }, items, this.config.touch);
+      if (!hitId) {
+        // Tapping in empty space is a deliberate deselect / cleanup
+        const wasLatched = Boolean(this.latch);
         this.latch = null;
+        if (wasLatched || this.config.arbitration.emptySpaceCleanup !== false) {
+          this.forceCleanup = true;
+        }
+      } else if (this.config.touch.clearLatchOnTap && this.latch?.id === hitId) {
+        this.latch = null;
+        this.forceCleanup = true;
       }
     }
 

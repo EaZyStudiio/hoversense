@@ -447,6 +447,12 @@ export interface ArbitrateParams {
     screen: boolean;
     touch: boolean;
   };
+  /**
+   * Explicit flag indicating a deselect action or that touch is in empty space.
+   * When true or when touchHit is null, Gaze channel immediately takes over (screenScale = 1.0)
+   * rather than being suppressed by idle touch authority.
+   */
+  isCleanup?: boolean;
 }
 
 /**
@@ -457,14 +463,14 @@ export interface ArbitrateParams {
  * Arbitration Rules:
  * - Touch Off: Pure screen channel resolution.
  * - Screen Off: Pure touch channel resolution (no hover until active touch engagement).
- * - Both Active: Touch holds authority while engaged. Screen channel intensity is scaled by
- *   (1.0 - authority), creating a seamless mathematical crossfade without abrupt snapping.
+ * - Both Active: Touch holds authority while engaged on a valid target. If touch is in empty space,
+ *   released, or explicitly cleaned up (deselected), Gaze channel immediately takes full authority (1.0).
  *
  * @param params Arbitration parameters.
  * @returns Sorted array of winning hover targets.
  */
 export function arbitrate(params: ArbitrateParams): HoverHit[] {
-  const { screenHits, touchHit, authority, modes } = params;
+  const { screenHits, touchHit, authority, modes, isCleanup } = params;
   const safeAuthority = clamp(authority, 0, 1);
   const map = new Map<string, HoverHit>();
 
@@ -478,12 +484,15 @@ export function arbitrate(params: ArbitrateParams): HoverHit[] {
     }
   };
 
+  const hasTouchTarget = Boolean(touchHit && touchHit.id);
+  const effectiveAuthority = (hasTouchTarget && !isCleanup) ? safeAuthority : 0;
+
   if (modes.screen) {
-    const screenScale = modes.touch ? 1 - safeAuthority : 1.0;
+    const screenScale = modes.touch ? 1 - effectiveAuthority : 1.0;
     screenHits.forEach(h => addHit(h, screenScale));
   }
 
-  if (modes.touch) {
+  if (modes.touch && !isCleanup) {
     addHit(touchHit, safeAuthority);
   }
 

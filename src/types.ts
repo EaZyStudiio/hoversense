@@ -132,6 +132,11 @@ export interface ArbitrationConfig {
    * 'never': Touch latch persists indefinitely until another touch takes over.
    */
   releaseMode: 'scroll' | 'off-screen' | 'never';
+
+  /**
+   * Whether deselecting in empty space triggers immediate cleanup and Gaze takeover (default: true).
+   */
+  emptySpaceCleanup?: boolean;
 }
 
 export interface HoverSenseConfig {
@@ -212,15 +217,17 @@ export interface HoverSenseDebugState {
   latch: TouchLatch | null;
   scrollY: number;
   takeover: number;
+  isCleanup: boolean;
 }
 
 export interface HoverSenseState {
   hits: HoverHit[];
   hitsById: Map<string, HoverHit>;
   debug: HoverSenseDebugState;
+  isCleanup: boolean;
 }
 
-export type HoverCallback = (hits: HoverHit[], state: HoverSenseState) => void;
+export type HoverCallback = (hits: HoverHit[], state: HoverSenseState, isCleanup?: boolean) => void;
 export type StateCallback = (state: HoverSenseState) => void;
 export type GestureCallback = (gesture: GestureState) => void;
 export type IntentCallback = (intent: number, gesture: GestureState) => void;

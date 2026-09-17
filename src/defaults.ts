@@ -95,6 +95,9 @@ export const DEFAULT_CONFIG: HoverSenseConfig = {
 
     // 'off-screen': touch latch retains authority until the locked item leaves viewport.
     releaseMode: 'off-screen',
+
+    // true: tapping/engaging in empty space forces immediate cleanup and Gaze takeover.
+    emptySpaceCleanup: true,
   },
 
   safeZones: DEFAULT_SAFE_ZONES,

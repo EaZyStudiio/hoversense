@@ -6,8 +6,10 @@ interface EdgeCaseDossierProps {
 }
 
 export const EdgeCaseDossier: React.FC<EdgeCaseDossierProps> = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
   return (
-    <div className={`dossier-backdrop ${isOpen ? 'open' : ''}`} onClick={onClose}>
+    <div className="dossier-backdrop" onClick={onClose}>
       <aside
         className="dossier-panel"
         onClick={(e) => e.stopPropagation()}

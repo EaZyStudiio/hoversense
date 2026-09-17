@@ -9,6 +9,10 @@ interface TopNavProps {
   onCenterScroll: () => void;
   deviceFrame: boolean;
   onToggleDeviceFrame: () => void;
+  showLeftSidebar: boolean;
+  onToggleLeftSidebar: () => void;
+  showRightPanel: boolean;
+  onToggleRightPanel: () => void;
   onOpenDossier: () => void;
   mobileTab: MobileTab;
   onSelectMobileTab: (tab: MobileTab) => void;
@@ -23,6 +27,10 @@ export const TopNav: React.FC<TopNavProps> = ({
   onCenterScroll,
   deviceFrame,
   onToggleDeviceFrame,
+  showLeftSidebar,
+  onToggleLeftSidebar,
+  showRightPanel,
+  onToggleRightPanel,
   onOpenDossier,
   mobileTab,
   onSelectMobileTab,
@@ -80,16 +88,36 @@ export const TopNav: React.FC<TopNavProps> = ({
           <span>⌖ Center</span>
         </button>
 
-        {/* Device Simulation Toggle (Desktop Only) */}
+        {/* Desktop Device & Panel Toggles */}
         {!isMobileDevice && (
-          <button
-            type="button"
-            className={`btn-tool-pill mono ${deviceFrame ? 'active-tool' : ''}`}
-            onClick={onToggleDeviceFrame}
-            title={deviceFrame ? 'Switch to Full Width View' : 'Simulate Mobile Device Frame'}
-          >
-            <span>{deviceFrame ? '📱 Mobile Frame' : '🖥️ Full Width'}</span>
-          </button>
+          <>
+            <button
+              type="button"
+              className={`btn-tool-pill mono ${deviceFrame ? 'active-tool' : ''}`}
+              onClick={onToggleDeviceFrame}
+              title={deviceFrame ? 'Switch to Full Width View' : 'Simulate Mobile Device Frame'}
+            >
+              <span>{deviceFrame ? '📱 Mobile Frame' : '🖥️ Full Width'}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`btn-tool-pill mono ${showLeftSidebar ? 'active-tool' : ''}`}
+              onClick={onToggleLeftSidebar}
+              title="Toggle Tuning Left Sidebar"
+            >
+              <span>🎛️ Tune</span>
+            </button>
+
+            <button
+              type="button"
+              className={`btn-tool-pill mono ${showRightPanel ? 'active-tool' : ''}`}
+              onClick={onToggleRightPanel}
+              title="Toggle Code Right Panel"
+            >
+              <span>💻 Code</span>
+            </button>
+          </>
         )}
       </div>
 

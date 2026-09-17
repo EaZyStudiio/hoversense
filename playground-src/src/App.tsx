@@ -48,6 +48,10 @@ export default function App() {
   const [deviceFrame, setDeviceFrame] = useState<boolean>(true);
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
 
+  // Desktop sidebar collapse toggles
+  const [showLeftSidebar, setShowLeftSidebar] = useState<boolean>(true);
+  const [showRightPanel, setShowRightPanel] = useState<boolean>(true);
+
   const [tuning, setTuning] = useState<TuningConfig>(DEFAULT_MAINFRAME_TUNING);
 
   const [guides, setGuides] = useState<VisualGuidesConfig>({
@@ -70,10 +74,10 @@ export default function App() {
 
   const centerScrollTriggerRef = useRef<(() => void) | null>(null);
 
-  // Detect mobile viewport width
+  // Detect mobile viewport width (< 820px)
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileDevice(window.innerWidth < 1024);
+      setIsMobileDevice(window.innerWidth < 820);
     };
     handleResize();
     window.addEventListener('resize', handleResize, { passive: true });
@@ -99,7 +103,6 @@ export default function App() {
     setGuides((prev) => ({ ...prev, [guideKey]: !prev[guideKey] }));
   };
 
-  // Quick toggle: toggles all guides on/off with one click
   const handleToggleAllGuides = () => {
     const areOn = guides.showAnchorLine || guides.showBand;
     setGuides((prev) => ({
@@ -134,6 +137,10 @@ export default function App() {
         onCenterScroll={handleCenterScroll}
         deviceFrame={deviceFrame}
         onToggleDeviceFrame={() => setDeviceFrame((d) => !d)}
+        showLeftSidebar={showLeftSidebar}
+        onToggleLeftSidebar={() => setShowLeftSidebar((s) => !s)}
+        showRightPanel={showRightPanel}
+        onToggleRightPanel={() => setShowRightPanel((s) => !s)}
         onOpenDossier={() => setDossierOpen(true)}
         mobileTab={mobileTab}
         onSelectMobileTab={setMobileTab}
@@ -141,57 +148,65 @@ export default function App() {
       />
 
       {/* Master 3-Column Workspace */}
-      <main className={`playground-master-layout mobile-view-${mobileTab}`}>
+      <main className={`playground-master-layout ${isMobileDevice ? `mobile-view-${mobileTab}` : ''}`}>
         {/* LEFT COLUMN: Biomechanical Tuning Controls */}
-        <LeftSidebar
-          tuning={tuning}
-          onChangeTuning={handleApplyTuning}
-          guides={guides}
-          onToggleGuide={handleToggleGuide}
-          telemetry={telemetry}
-          onCenterScroll={handleCenterScroll}
-          onResetDefaults={handleResetDefaults}
-        />
+        {(!isMobileDevice ? showLeftSidebar : mobileTab === 'tune') && (
+          <LeftSidebar
+            tuning={tuning}
+            onChangeTuning={handleApplyTuning}
+            guides={guides}
+            onToggleGuide={handleToggleGuide}
+            telemetry={telemetry}
+            onCenterScroll={handleCenterScroll}
+            onResetDefaults={handleResetDefaults}
+          />
+        )}
 
         {/* CENTER COLUMN: Mobile Preview Canvas */}
-        <section className="center-canvas-pane" aria-label="Interactive Preview Canvas">
-          <div className={deviceFrame && !isMobileDevice ? 'simulated-phone-frame' : 'full-width-canvas-wrapper'}>
-            {deviceFrame && !isMobileDevice && <div className="phone-speaker-island" />}
+        {(!isMobileDevice || mobileTab === 'preview') && (
+          <section className="center-canvas-pane" aria-label="Interactive Preview Canvas">
+            <div className={deviceFrame && !isMobileDevice ? 'simulated-phone-frame' : 'full-width-canvas-wrapper'}>
+              {deviceFrame && !isMobileDevice && <div className="phone-speaker-island" />}
 
-            {showcase === 'mainframe' ? (
-              <MainframeStage
-                projects={MOCK_PROJECTS}
-                tuning={tuning}
-                guides={guides}
-                onTelemetryUpdate={setTelemetry}
-                onCenterRequest={(fn) => { centerScrollTriggerRef.current = fn; }}
-              />
-            ) : (
-              <TeamGridStage
-                members={MOCK_TEAM}
-                tuning={tuning}
-                guides={guides}
-                onTelemetryUpdate={setTelemetry}
-                onCenterRequest={(fn) => { centerScrollTriggerRef.current = fn; }}
-              />
-            )}
-          </div>
-        </section>
+              {showcase === 'mainframe' ? (
+                <MainframeStage
+                  projects={MOCK_PROJECTS}
+                  tuning={tuning}
+                  guides={guides}
+                  onTelemetryUpdate={setTelemetry}
+                  onCenterRequest={(fn) => { centerScrollTriggerRef.current = fn; }}
+                />
+              ) : (
+                <TeamGridStage
+                  members={MOCK_TEAM}
+                  tuning={tuning}
+                  guides={guides}
+                  onTelemetryUpdate={setTelemetry}
+                  onCenterRequest={(fn) => { centerScrollTriggerRef.current = fn; }}
+                />
+              )}
+            </div>
+          </section>
+        )}
 
         {/* RIGHT COLUMN: CodeMirror 6 Panel */}
-        <RightCodePanel
-          activeFile={activeFile}
-          onSelectFile={setActiveFile}
-          tuning={tuning}
-          onApplyTuning={handleApplyTuning}
-        />
+        {(!isMobileDevice ? showRightPanel : mobileTab === 'code') && (
+          <RightCodePanel
+            activeFile={activeFile}
+            onSelectFile={setActiveFile}
+            tuning={tuning}
+            onApplyTuning={handleApplyTuning}
+          />
+        )}
       </main>
 
-      {/* Mobile Bottom Navigation (Visible on screen < 1024px) */}
-      <MobileBottomNav
-        activeTab={mobileTab}
-        onSelectTab={setMobileTab}
-      />
+      {/* Mobile Bottom Navigation (Visible on screen < 820px) */}
+      {isMobileDevice && (
+        <MobileBottomNav
+          activeTab={mobileTab}
+          onSelectTab={setMobileTab}
+        />
+      )}
 
       {/* Technical Edge Case Dossier Modal */}
       <EdgeCaseDossier isOpen={dossierOpen} onClose={() => setDossierOpen(false)} />

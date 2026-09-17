@@ -4,6 +4,7 @@
  */
 
 import assert from 'node:assert/strict';
+import { resolveScreen } from '../dist/hoversense.es.js';
 
 function clamp(v, lo, hi) {
   const actualLo = Math.min(lo, hi);
@@ -229,4 +230,18 @@ assert.equal(cleanupResult.length, 1, 'Cleanup forces Gaze takeover');
 assert.equal(cleanupResult[0].id, 'card-gaze-1');
 console.log('  [PASS] dual-channel empty space deselect & gaze takeover');
 
-console.log('\nAll 16 Math & Edge-Case Tests Passed Successfully!');
+// 7. Automatic Row Split Resolution (resolve: 'auto')
+const multiColItems = [
+  { id: 'col1', rect: { left: 10, right: 180, top: 100, bottom: 250, width: 170, height: 150 } },
+  { id: 'col2', rect: { left: 200, right: 370, top: 100, bottom: 250, width: 170, height: 150 } },
+];
+const autoResult = resolveScreen(multiColItems, 400, 800, {
+  anchorRatio: 0.20,
+  bandRatio: 0.30,
+  resolve: 'auto',
+  rowSplit: 0.0,
+});
+assert(autoResult.length > 0, 'Auto resolve finds hits in multi-column rack');
+console.log('  [PASS] automatic row split for multi-column racks (resolve: auto)');
+
+console.log('\nAll 17 Math & Edge-Case Tests Passed Successfully!');

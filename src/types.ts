@@ -61,8 +61,9 @@ export interface ScreenChannelConfig {
    * Row clustering and column stagger resolution mode.
    * 'global': exactly one winner across the entire screen.
    * 'per-column': independent winners per detected column.
+   * 'auto': automatically detects multi-column / staggered racks and enables independent column crossfading.
    */
-  resolve: 'global' | 'per-column';
+  resolve: 'global' | 'per-column' | 'auto';
 
   /**
    * In-row column split weight (0.0 to 1.0).
@@ -137,6 +138,13 @@ export interface ArbitrationConfig {
    * Whether deselecting in empty space triggers immediate cleanup and Gaze takeover (default: true).
    */
   emptySpaceCleanup?: boolean;
+
+  /**
+   * Minimum dwell duration in milliseconds an item must continuously reside near the gaze anchor
+   * horizon before discrete popup triggers or latching occurs (default: 0, disabled).
+   * Eliminates rapid visual strobing during fast vertical scroll flicks.
+   */
+  dwellThresholdMs?: number;
 }
 
 export interface HoverSenseConfig {
@@ -218,6 +226,8 @@ export interface HoverSenseDebugState {
   scrollY: number;
   takeover: number;
   isCleanup: boolean;
+  dwellActiveId?: string | null;
+  dwellMet?: boolean;
 }
 
 export interface HoverSenseState {

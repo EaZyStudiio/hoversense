@@ -98,6 +98,9 @@ export const DEFAULT_CONFIG: HoverSenseConfig = {
 
     // true: tapping/engaging in empty space forces immediate cleanup and Gaze takeover.
     emptySpaceCleanup: true,
+
+    // 0ms: dwell filter disabled by default (instant continuous evaluation).
+    dwellThresholdMs: 0,
   },
 
   safeZones: DEFAULT_SAFE_ZONES,

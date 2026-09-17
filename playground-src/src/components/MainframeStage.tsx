@@ -84,8 +84,8 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
           takeoverFullPx: tuning.takeoverFullPx,
         },
         modes: {
-          screen: true,
-          touch: true,
+          screen: tuning.screenChannelEnabled !== false,
+          touch: tuning.touchChannelEnabled !== false,
         },
         bindCssVariables: true,
         feedback: true,
@@ -143,8 +143,8 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
         ref={scrollViewportRef}
         className="mainframe-scroll-canvas"
       >
-        {/* Visual Gaze Anchor Line (Fixed relative to the viewport window) */}
-        {guides.showAnchorLine && (
+        {/* Visual Gaze Anchor Line (Strictly constrained to mobile viewport) */}
+        {guides.showAnchorLine && tuning.screenChannelEnabled !== false && (
           <div
             className="visual-anchor-guide-line"
             style={{ top: `${tuning.anchorRatio * 100}%` }}
@@ -157,7 +157,7 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
         )}
 
         {/* Visual Falloff Band (Soft highlight band) */}
-        {guides.showBand && (
+        {guides.showBand && tuning.screenChannelEnabled !== false && (
           <div
             className="visual-falloff-band"
             style={{
@@ -165,6 +165,20 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
               height: `${tuning.bandRatio * 100}%`,
             }}
           />
+        )}
+
+        {/* Safe Zone Bezels (Top Status Bar, Bottom Home Bar, Side Bezels) */}
+        {guides.showSafeZones && (
+          <div className="safe-zones-overlay" aria-hidden="true">
+            <div className="safe-zone-top">
+              <span className="safe-zone-tag mono">SAFE ZONE: TOP (STATUS BAR)</span>
+            </div>
+            <div className="safe-zone-bottom">
+              <span className="safe-zone-tag mono">SAFE ZONE: BOTTOM (HOME INDICATOR)</span>
+            </div>
+            <div className="safe-zone-left" />
+            <div className="safe-zone-right" />
+          </div>
         )}
 
         {/* Abundant Spacing Header to allow scrolling past anchor */}
@@ -190,7 +204,7 @@ export const MainframeStage: React.FC<MainframeStageProps> = ({
           </div>
 
           {/* List of Tactical Units */}
-          <div className="tactical-units-list">
+          <div className="tactical-units-list" style={{ gap: `${tuning.mainframeGapPx ?? 2}px` }}>
             {projects.map((project, index) => {
               const isFirst = index === 0;
               const isHovered = activeUnitId === project.id;

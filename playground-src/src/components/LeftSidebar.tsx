@@ -1,6 +1,6 @@
 import React from 'react';
 import { Crosshair, RotateCcw, Undo2, Redo2 } from 'lucide-react';
-import type { TuningConfig, TelemetryData, VisualGuidesConfig } from '../types';
+import type { TuningConfig, TelemetryData, VisualGuidesConfig, ShowcaseMode } from '../types';
 
 interface LeftSidebarProps {
   tuning: TuningConfig;
@@ -14,6 +14,7 @@ interface LeftSidebarProps {
   canRedo?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
+  showcase?: ShowcaseMode;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -28,6 +29,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   canRedo = false,
   onUndo,
   onRedo,
+  showcase = 'mainframe',
 }) => {
   return (
     <aside className="left-sidebar-pane" aria-label="Biomechanical Tuning Controls">
@@ -145,9 +147,60 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </div>
         </div>
 
+        {/* Demo-Specific Properties Section (Item 4) */}
+        <div className="tuning-section">
+          <span className="section-label mono">
+            {showcase === 'mainframe' ? 'DEMO: MAINFRAME PROPERTIES' : 'DEMO: COLLECTIVE PROPERTIES'}
+          </span>
+
+          {showcase === 'mainframe' ? (
+            <div className="slider-control">
+              <div className="slider-header mono">
+                <span>unit vertical gap</span>
+                <span className="slider-val">{(tuning.mainframeGapPx ?? 2)}px</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="24"
+                step="1"
+                value={tuning.mainframeGapPx ?? 2}
+                onChange={(e) => onChangeTuning({ mainframeGapPx: parseInt(e.target.value, 10) })}
+                className="range-slider"
+              />
+            </div>
+          ) : (
+            <div className="slider-control">
+              <div className="slider-header mono">
+                <span>scatter spread length</span>
+                <span className="slider-val">{(tuning.collectiveScatterSpread ?? 1.0).toFixed(2)}x</span>
+              </div>
+              <input
+                type="range"
+                min="0.8"
+                max="2.5"
+                step="0.05"
+                value={tuning.collectiveScatterSpread ?? 1.0}
+                onChange={(e) => onChangeTuning({ collectiveScatterSpread: parseFloat(e.target.value) })}
+                className="range-slider"
+              />
+            </div>
+          )}
+        </div>
+
         {/* Screen Channel Sliders */}
         <div className="tuning-section">
-          <span className="section-label mono">SCREEN GAZE CHANNEL</span>
+          <div className="section-header-row mono">
+            <span className="section-label">SCREEN GAZE CHANNEL</span>
+            <button
+              type="button"
+              className={`btn-channel-pill mono ${tuning.screenChannelEnabled !== false ? 'channel-active' : 'channel-muted'}`}
+              onClick={() => onChangeTuning({ screenChannelEnabled: tuning.screenChannelEnabled === false })}
+              title="Toggle Screen Gaze Channel on/off"
+            >
+              {tuning.screenChannelEnabled !== false ? 'ACTIVE' : 'MUTED'}
+            </button>
+          </div>
 
           {/* Anchor Ratio */}
           <div className="slider-control">
@@ -163,6 +216,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               value={tuning.anchorRatio}
               onChange={(e) => onChangeTuning({ anchorRatio: parseFloat(e.target.value) })}
               className="range-slider"
+              disabled={tuning.screenChannelEnabled === false}
             />
           </div>
 
@@ -180,6 +234,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               value={tuning.bandRatio}
               onChange={(e) => onChangeTuning({ bandRatio: parseFloat(e.target.value) })}
               className="range-slider"
+              disabled={tuning.screenChannelEnabled === false}
             />
           </div>
 
@@ -197,13 +252,24 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               value={tuning.rowSplit}
               onChange={(e) => onChangeTuning({ rowSplit: parseFloat(e.target.value) })}
               className="range-slider"
+              disabled={tuning.screenChannelEnabled === false}
             />
           </div>
         </div>
 
         {/* Touch Channel Sliders */}
         <div className="tuning-section">
-          <span className="section-label mono">TOUCH INTENT CHANNEL</span>
+          <div className="section-header-row mono">
+            <span className="section-label">TOUCH INTENT CHANNEL</span>
+            <button
+              type="button"
+              className={`btn-channel-pill mono ${tuning.touchChannelEnabled !== false ? 'channel-active' : 'channel-muted'}`}
+              onClick={() => onChangeTuning({ touchChannelEnabled: tuning.touchChannelEnabled === false })}
+              title="Toggle Touch Intent Channel on/off"
+            >
+              {tuning.touchChannelEnabled !== false ? 'ACTIVE' : 'MUTED'}
+            </button>
+          </div>
 
           {/* Engage At */}
           <div className="slider-control">

@@ -56,4 +56,8 @@ export interface TuningConfig {
   rowSplit: number;
   takeoverFullPx: number;
   releaseMode: 'off-screen' | 'scroll' | 'never';
+  screenChannelEnabled?: boolean;
+  touchChannelEnabled?: boolean;
+  mainframeGapPx?: number;
+  collectiveScatterSpread?: number;
 }

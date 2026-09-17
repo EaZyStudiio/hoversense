@@ -89,29 +89,64 @@ export const RightCodePanel: React.FC<RightCodePanelProps> = ({
 
   return (
     <div className="right-code-panel" aria-label="CodeMirror 6 Inspector & Editor">
-      {/* File Tabs Bar */}
-      <div className="codemirror-tab-bar">
-        {Object.keys(CODE_SNIPPETS).map((file) => {
-          const isOriginal = file.includes('.original.');
-          const isDX = file.includes('.dx.');
-          const isActive = file === activeFile;
+      {/* 3-Column Vertically Paired Tab Grid */}
+      <div className="codemirror-tab-grid" role="tablist">
+        {/* Column 1: Mainframe pair */}
+        <div className="tab-pair-col">
+          <button
+            type="button"
+            className={`cm-grid-tab ${activeFile === 'Mainframe.original.tsx' ? 'active' : ''}`}
+            onClick={() => onSelectFile('Mainframe.original.tsx')}
+          >
+            <span className="tab-icon"><Code2 size={12} /></span>
+            <span className="tab-name mono">Mainframe.original.tsx</span>
+            <span className="tab-tag tag-legacy mono">ORIGINAL</span>
+          </button>
+          <button
+            type="button"
+            className={`cm-grid-tab ${activeFile === 'Mainframe.dx.tsx' ? 'active' : ''}`}
+            onClick={() => onSelectFile('Mainframe.dx.tsx')}
+          >
+            <span className="tab-icon"><Code2 size={12} /></span>
+            <span className="tab-name mono">Mainframe.dx.tsx</span>
+            <span className="tab-tag tag-dx mono">DX</span>
+          </button>
+        </div>
 
-          return (
-            <button
-              key={file}
-              type="button"
-              className={`codemirror-tab ${isActive ? 'active' : ''}`}
-              onClick={() => onSelectFile(file)}
-            >
-              <span className="tab-icon">
-                {file.endsWith('.css') ? <Palette size={12} /> : <Code2 size={12} />}
-              </span>
-              <span className="tab-name mono">{file}</span>
-              {isOriginal && <span className="tab-tag tag-legacy mono">ORIGINAL</span>}
-              {isDX && <span className="tab-tag tag-dx mono">DX</span>}
-            </button>
-          );
-        })}
+        {/* Column 2: TeamGrid pair */}
+        <div className="tab-pair-col">
+          <button
+            type="button"
+            className={`cm-grid-tab ${activeFile === 'TeamGrid.original.tsx' ? 'active' : ''}`}
+            onClick={() => onSelectFile('TeamGrid.original.tsx')}
+          >
+            <span className="tab-icon"><Code2 size={12} /></span>
+            <span className="tab-name mono">TeamGrid.original.tsx</span>
+            <span className="tab-tag tag-legacy mono">ORIGINAL</span>
+          </button>
+          <button
+            type="button"
+            className={`cm-grid-tab ${activeFile === 'TeamGrid.dx.tsx' ? 'active' : ''}`}
+            onClick={() => onSelectFile('TeamGrid.dx.tsx')}
+          >
+            <span className="tab-icon"><Code2 size={12} /></span>
+            <span className="tab-name mono">TeamGrid.dx.tsx</span>
+            <span className="tab-tag tag-dx mono">DX</span>
+          </button>
+        </div>
+
+        {/* Column 3: Stylesheet standalone */}
+        <div className="tab-col-standalone">
+          <button
+            type="button"
+            className={`cm-grid-tab standalone-tab ${activeFile === 'hoversense.css' ? 'active' : ''}`}
+            onClick={() => onSelectFile('hoversense.css')}
+          >
+            <span className="tab-icon"><Palette size={12} /></span>
+            <span className="tab-name mono">hoversense.css</span>
+            <span className="tab-tag tag-css mono">CSS</span>
+          </button>
+        </div>
       </div>
 
       {/* Code Editor Header Strip */}

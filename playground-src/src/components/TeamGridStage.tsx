@@ -11,6 +11,7 @@ interface TeamGridStageProps {
   onTelemetryUpdate: (data: TelemetryData) => void;
   onCenterRequest?: (trigger: () => void) => void;
   touchSim?: boolean;
+  preventImageDrag?: boolean;
 }
 
 export const TeamGridStage: React.FC<TeamGridStageProps> = ({
@@ -20,6 +21,7 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
   onTelemetryUpdate,
   onCenterRequest,
   touchSim = true,
+  preventImageDrag = false,
 }) => {
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const stageContentRef = useRef<HTMLDivElement>(null);
@@ -74,8 +76,8 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
           takeoverFullPx: tuning.takeoverFullPx,
         },
         modes: {
-          screen: true,
-          touch: true,
+          screen: tuning.screenChannelEnabled !== false,
+          touch: tuning.touchChannelEnabled !== false,
         },
         bindCssVariables: true,
         feedback: true,
@@ -113,20 +115,22 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
     };
   }, [tuning, members]);
 
+  const spread = tuning.collectiveScatterSpread ?? 1.0;
+
   const cardLayouts = [
-    { top: '4%', left: '4%', rotate: '-2.5deg' },
-    { top: '6%', right: '4%', rotate: '3deg' },
-    { top: '36%', left: '6%', rotate: '1.5deg' },
-    { top: '40%', right: '6%', rotate: '-2deg' },
-    { bottom: '6%', left: '5%', rotate: '3.5deg' },
-    { bottom: '4%', right: '5%', rotate: '-1.5deg' },
+    { top: `${3.5 * spread}%`, left: '4%', rotate: '-2.5deg' },
+    { top: `${6.5 * spread}%`, right: '4%', rotate: '3deg' },
+    { top: `${36 * spread}%`, left: '6%', rotate: '1.5deg' },
+    { top: `${42 * spread}%`, right: '6%', rotate: '-2deg' },
+    { bottom: `${6.5 * spread}%`, left: '5%', rotate: '3.5deg' },
+    { bottom: `${3.5 * spread}%`, right: '5%', rotate: '-1.5deg' },
   ];
 
   return (
     <div className="collective-viewport-wrapper">
       <div ref={scrollViewportRef} className="collective-scroll-canvas">
         {/* Visual Gaze Anchor Line */}
-        {guides.showAnchorLine && (
+        {guides.showAnchorLine && tuning.screenChannelEnabled !== false && (
           <div
             className="visual-anchor-guide-line"
             style={{ top: `${tuning.anchorRatio * 100}%` }}
@@ -139,7 +143,7 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
         )}
 
         {/* Visual Falloff Band */}
-        {guides.showBand && (
+        {guides.showBand && tuning.screenChannelEnabled !== false && (
           <div
             className="visual-falloff-band"
             style={{
@@ -149,11 +153,29 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
           />
         )}
 
+        {/* Safe Zone Bezels (Top Status Bar, Bottom Home Bar, Side Bezels) */}
+        {guides.showSafeZones && (
+          <div className="safe-zones-overlay" aria-hidden="true">
+            <div className="safe-zone-top">
+              <span className="safe-zone-tag mono">SAFE ZONE: TOP (STATUS BAR)</span>
+            </div>
+            <div className="safe-zone-bottom">
+              <span className="safe-zone-tag mono">SAFE ZONE: BOTTOM (HOME INDICATOR)</span>
+            </div>
+            <div className="safe-zone-left" />
+            <div className="safe-zone-right" />
+          </div>
+        )}
+
         {/* Abundant Scroll Lead */}
         <div className="abundant-scroll-lead" />
 
-        {/* Central Stage Content */}
-        <div ref={stageContentRef} className="collective-canvas-inner">
+        {/* Central Stage Content with dynamic min-height based on scatter spread */}
+        <div
+          ref={stageContentRef}
+          className="collective-canvas-inner"
+          style={{ minHeight: `calc(840px * ${spread})` }}
+        >
           {/* Background Typography */}
           <div className="collective-background-text" aria-hidden="true">
             <span className="collective-subhead mono">THE COLLECTIVE</span>
@@ -189,7 +211,8 @@ export const TeamGridStage: React.FC<TeamGridStageProps> = ({
                     src={member.image}
                     alt={member.name}
                     loading="lazy"
-                    className="team-card-image"
+                    draggable={!preventImageDrag}
+                    className={`team-card-image ${preventImageDrag ? 'no-ghost-drag' : ''}`}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = createSvgThumbnail('0' + member.id, member.name);

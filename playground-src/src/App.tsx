@@ -26,6 +26,10 @@ const DEFAULT_MAINFRAME_TUNING: TuningConfig = {
   rowSplit: 0.0,
   takeoverFullPx: 560,
   releaseMode: 'off-screen',
+  screenChannelEnabled: true,
+  touchChannelEnabled: true,
+  mainframeGapPx: 2,
+  collectiveScatterSpread: 1.0,
 };
 
 const DEFAULT_COLLECTIVE_TUNING: TuningConfig = {
@@ -38,6 +42,10 @@ const DEFAULT_COLLECTIVE_TUNING: TuningConfig = {
   rowSplit: 0.0,
   takeoverFullPx: 480,
   releaseMode: 'off-screen',
+  screenChannelEnabled: true,
+  touchChannelEnabled: true,
+  mainframeGapPx: 2,
+  collectiveScatterSpread: 1.0,
 };
 
 export default function App() {
@@ -48,6 +56,7 @@ export default function App() {
   const [deviceFrame, setDeviceFrame] = useState<boolean>(true);
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
   const [touchSim, setTouchSim] = useState<boolean>(true);
+  const [preventImageDrag, setPreventImageDrag] = useState<boolean>(false);
   const [showSimToast, setShowSimToast] = useState<boolean>(() => {
     try {
       return sessionStorage.getItem('hs_sim_toast_dismissed') !== '1';
@@ -213,6 +222,7 @@ export default function App() {
             canRedo={historyIndex < tuningHistory.length - 1}
             onUndo={handleUndoTuning}
             onRedo={handleRedoTuning}
+            showcase={showcase}
           />
         )}
 
@@ -222,31 +232,41 @@ export default function App() {
             {/* Session Touch Emulation Toast */}
             {touchSim && showSimToast && !isMobileDevice && (
               <div className="touch-sim-notification-toast mono">
-                <div className="toast-text-group">
+                <div className="toast-header-row">
                   <span className="toast-badge">TOUCH EMULATION</span>
-                  <span className="toast-desc">
-                    Click &amp; drag mouse to swipe/scroll. Hovers trigger via gaze anchor horizon or touch-hold.
-                  </span>
+                  <div className="toast-btn-group">
+                    {showcase === 'collective' && (
+                      <button
+                        type="button"
+                        className={`btn-toast-special ${preventImageDrag ? 'active' : ''}`}
+                        onClick={() => setPreventImageDrag((p) => !p)}
+                        title={preventImageDrag ? 'Native Image Drag is Blocked (Swipes scroll canvas)' : 'Native Image Drag is Allowed'}
+                      >
+                        {preventImageDrag ? 'Image Ghost: OFF' : 'Image Ghost: ON'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn-toast-confirm"
+                      onClick={handleDismissSimToast}
+                    >
+                      Got it
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-toast-optout"
+                      onClick={() => {
+                        setTouchSim(false);
+                        handleDismissSimToast();
+                      }}
+                    >
+                      Disable
+                    </button>
+                  </div>
                 </div>
-                <div className="toast-btn-group">
-                  <button
-                    type="button"
-                    className="btn-toast-confirm"
-                    onClick={handleDismissSimToast}
-                  >
-                    Got it
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-toast-optout"
-                    onClick={() => {
-                      setTouchSim(false);
-                      handleDismissSimToast();
-                    }}
-                  >
-                    Disable
-                  </button>
-                </div>
+                <p className="toast-desc">
+                  Click &amp; drag mouse to swipe/scroll. Hovers trigger via gaze anchor horizon or touch-hold.
+                </p>
               </div>
             )}
 
@@ -270,6 +290,7 @@ export default function App() {
                   onTelemetryUpdate={setTelemetry}
                   onCenterRequest={(fn) => { centerScrollTriggerRef.current = fn; }}
                   touchSim={touchSim}
+                  preventImageDrag={preventImageDrag}
                 />
               )}
             </div>

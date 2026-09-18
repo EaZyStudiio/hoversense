@@ -6,7 +6,7 @@ Touchscreens do not have a continuous hover cursor. HoverSense bridges this phys
 
 Mount in three lines with zero framework re-renders, or use the low-level engine API directly for custom spatial pipelines.
 
-[⚡ Live Playground](https://eazystudiio.github.io/hoversense/playground/) | [📱 Mobile Demo](https://eazystudiio.github.io/hoversense/) | [Architecture Dossier](docs/DX_ANALYSIS.md) | [Core Math Branch (Lean)](https://github.com/EaZyStudiio/hoversense/tree/lean)
+[⚡ Live Playground](https://StudioEaZY.github.io/hoversense/playground/) | [📱 Mobile Demo](https://StudioEaZY.github.io/hoversense/) | [Architecture Dossier](docs/DX_ANALYSIS.md) | [Core Math Branch (Lean)](https://github.com/StudioEaZY/hoversense/tree/lean)
 
 ---
 
@@ -130,7 +130,7 @@ npm install
 npm run dev
 ```
 
-Visit the live production deployment: [https://eazystudiio.github.io/hoversense/playground/](https://eazystudiio.github.io/hoversense/playground/)
+Visit the live production deployment: [https://StudioEaZY.github.io/hoversense/playground/](https://StudioEaZY.github.io/hoversense/playground/)
 
 ---
 
@@ -138,7 +138,7 @@ Visit the live production deployment: [https://eazystudiio.github.io/hoversense/
 
 If you are building custom WebGL shaders, Three.js scenes, game viewports, or non-web runtimes (Kotlin, Swift, Rust), you do not need DOM helpers or website assets.
 
-Switch to the **[`lean`](https://github.com/EaZyStudiio/hoversense/tree/lean)** branch:
+Switch to the **[`lean`](https://github.com/StudioEaZY/hoversense/tree/lean)** branch:
 * Pure geometric calculations (`distToRect`, `resolveScreen`, `computeIntent`, `arbitrate`).
 * Zero DOM code, zero website assets.
 * Lightweight TypeScript core with zero dependencies.
@@ -151,4 +151,4 @@ git checkout lean
 
 ## License
 
-MIT License. Copyright (c) 2026 EaZy (EaZyStudiio).
+MIT License. Copyright (c) 2026 EaZy (StudioEaZY).

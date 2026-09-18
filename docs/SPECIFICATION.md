@@ -1,7 +1,7 @@
 # HoverSense Mathematical & Biomechanical Specification
 
 Version: 1.0.0  
-Authors: EaZy (https://github.com/EaZyStudiio)  
+Authors: EaZy (https://github.com/StudioEaZY)  
 License: MIT
 
 ---

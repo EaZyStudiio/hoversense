@@ -5,7 +5,7 @@ Framework-agnostic mathematical core and pointerless interaction engine for touc
 This branch contains the lean, unopinionated core of HoverSense. It provides pure geometric modeling, signal processing, intent accumulation, and channel arbitration equations with zero framework dependencies.
 
 > **Looking for the turnkey DOM experience?**
-> The [`main`](https://github.com/EaZyStudiio/hoversense/tree/main) branch contains the high-level Developer Experience (`createHoverSenseContainer`, automatic touch hygiene, CSS custom property injection, and discrete DOM attributes). You can also explore the [Live Interactive Playground](https://eazystudiio.github.io/hoversense/playground/).
+> The [`main`](https://github.com/StudioEaZY/hoversense/tree/main) branch contains the high-level Developer Experience (`createHoverSenseContainer`, automatic touch hygiene, CSS custom property injection, and discrete DOM attributes). You can also explore the [Live Interactive Playground](https://StudioEaZY.github.io/hoversense/playground/).
 
 ---
 
@@ -158,11 +158,11 @@ npm run build
 ## Live Website Reference
 
 The full interactive website, live demonstrations, and visual parameter playground are hosted at:
-* **Interactive Demo**: [https://eazystudiio.github.io/hoversense/](https://eazystudiio.github.io/hoversense/)
-* **Playground Source**: Maintained on the [`main`](https://github.com/EaZyStudiio/hoversense/tree/main) branch.
+* **Interactive Demo**: [https://StudioEaZY.github.io/hoversense/](https://StudioEaZY.github.io/hoversense/)
+* **Playground Source**: Maintained on the [`main`](https://github.com/StudioEaZY/hoversense/tree/main) branch.
 
 ---
 
 ## License
 
-MIT License. Copyright (c) 2026 EaZy (EaZyStudiio).
+MIT License. Copyright (c) 2026 EaZy (StudioEaZY).

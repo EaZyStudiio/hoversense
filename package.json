@@ -10,11 +10,11 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EaZyStudiio/hoversense.git"
+    "url": "git+https://github.com/StudioEaZY/hoversense.git"
   },
-  "homepage": "https://eazystudiio.github.io/hoversense",
+  "homepage": "https://StudioEaZY.github.io/hoversense",
   "bugs": {
-    "url": "https://github.com/EaZyStudiio/hoversense/issues"
+    "url": "https://github.com/StudioEaZY/hoversense/issues"
   },
   "exports": {
     ".": {
@@ -55,7 +55,7 @@
     "interaction-design",
     "framework-agnostic"
   ],
-  "author": "EaZy (https://github.com/EaZyStudiio)",
+  "author": "EaZy (https://github.com/StudioEaZY)",
   "license": "MIT",
   "devDependencies": {
     "typescript": "^5.4.5",
